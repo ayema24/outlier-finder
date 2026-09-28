@@ -114,10 +114,42 @@
     var d = el('div'); d.appendChild(el('dt', null, label + ' ')); d.appendChild(el('dd', null, value)); dl.appendChild(d);
   }
 
+  // ---- hover preview: cycles through YouTube's auto-generated frames ----
+  var PREVIEW_MS = 800;
+  function attachPreview(thumb, img, r) {
+    var frames = OF.previewFrames(r.id), orig = img.src, timer = null, i = 0;
+    var dots = el('span', 'dots');
+    frames.forEach(function () { dots.appendChild(el('i')); });
+    thumb.appendChild(dots);
+    function paint() {
+      img.src = frames[i];
+      Array.prototype.forEach.call(dots.children, function (d, k) { d.className = k === i ? 'on' : ''; });
+    }
+    function start() {
+      if (timer) return;
+      thumb.classList.add('previewing');
+      frames.forEach(function (u) { new Image().src = u; }); // preload
+      i = 0; paint();
+      timer = setInterval(function () { i = (i + 1) % frames.length; paint(); }, PREVIEW_MS);
+    }
+    function stop() {
+      clearInterval(timer); timer = null;
+      thumb.classList.remove('previewing'); img.src = orig;
+    }
+    img.addEventListener('error', function () { if (img.src !== orig) { frames.splice(i, 1); if (!frames.length) stop(); } });
+    thumb.addEventListener('mouseenter', start);
+    thumb.addEventListener('mouseleave', stop);
+    thumb.addEventListener('focus', start);
+    thumb.addEventListener('blur', stop);
+    thumb.addEventListener('touchstart', start, { passive: true });
+    thumb.addEventListener('touchend', stop);
+    thumb.addEventListener('touchcancel', stop);
+  }
+
   function card(r) {
     var c = el('article', 'card');
     var t = el('a', 'thumb'); t.href = r.url; t.target = '_blank'; t.rel = 'noopener noreferrer'; t.setAttribute('aria-label', 'Watch: ' + r.title);
-    if (r.thumb) { var img = el('img'); img.src = r.thumb; img.alt = ''; img.loading = 'lazy'; t.appendChild(img); }
+    if (r.thumb) { var img = el('img'); img.src = r.thumb; img.alt = ''; img.loading = 'lazy'; t.appendChild(img); attachPreview(t, img, r); }
     t.appendChild(el('span', 'score', OF.formatScore(r.score)));
     t.appendChild(el('span', 'dur', OF.formatDuration(r.duration)));
     c.appendChild(t);

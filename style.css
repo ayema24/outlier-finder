@@ -95,3 +95,9 @@ input:focus, select:focus { border-color: #8b5cf6; outline: 2px solid rgba(139,9
 .inspo { margin-bottom: 20px; }
 .inspo-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .inspo h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
+.thumb .dots { position: absolute; left: 0; right: 0; bottom: 0; display: none; gap: 3px; padding: 0 6px 5px; }
+.thumb .dots i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.4); }
+.thumb .dots i.on { background: #fff; }
+.thumb.previewing .dots { display: flex; }
+.thumb.previewing .dur { bottom: 14px; }
+.thumb.previewing img { transform: none; }

@@ -198,6 +198,12 @@
     return 'YouTube API error (' + status + ')' + (msg ? ': ' + msg : '.');
   }
 
+  /** YouTube auto-generated frames (start / middle / end) for hover previews. */
+  function previewFrames(id) {
+    var base = 'https://i.ytimg.com/vi/' + encodeURIComponent(id) + '/';
+    return [1, 2, 3].map(function (n) { return base + 'mq' + n + '.jpg'; });
+  }
+
   function chunk(arr, n) {
     var out = [];
     for (var i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
@@ -209,6 +215,6 @@
     formatCount: formatCount, formatScore: formatScore, formatAge: formatAge,
     ageDays: ageDays, outlierScore: outlierScore, viewsPerDay: viewsPerDay,
     parseCount: parseCount, buildRows: buildRows, sortRows: sortRows, mergeRows: mergeRows,
-    toCSV: toCSV, csvCell: csvCell, describeApiError: describeApiError, chunk: chunk
+    toCSV: toCSV, csvCell: csvCell, describeApiError: describeApiError, chunk: chunk, previewFrames: previewFrames
   };
 });

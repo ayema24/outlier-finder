@@ -99,4 +99,10 @@ t('niches are well-formed and unique', () => {
   assert.strictEqual(qs.size, OF.NICHES.length);
   OF.NICHES.forEach(x => assert.ok(x.name && x.icon && x.q.trim()));
 });
+t('previewFrames builds 3 frame URLs', () => {
+  const f = OF.previewFrames('abc123');
+  assert.strictEqual(f.length, 3);
+  assert.strictEqual(f[0], 'https://i.ytimg.com/vi/abc123/mq1.jpg');
+  assert.strictEqual(f[2], 'https://i.ytimg.com/vi/abc123/mq3.jpg');
+});
 console.log(`\n${n} tests passed`);
