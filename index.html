@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Outlier Finder</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>Outlier Finder</h1>
+  <div class="top-actions">
+    <span class="quota" id="quota" title="Approximate; the real quota is tracked by Google. Default limit is 10,000/day.">Quota: 0 units</span>
+    <button type="button" class="ghost" id="themeBtn" aria-label="Toggle dark mode">◐</button>
+    <button type="button" class="ghost" id="settingsBtn" aria-expanded="false" aria-controls="settings">⚙ Settings</button>
+  </div>
+</header>
+
+<main>
+  <section id="settings" class="panel" hidden>
+    <h2>Settings</h2>
+    <label for="apiKey">YouTube Data API v3 key</label>
+    <div class="row">
+      <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your API key">
+      <button type="button" id="saveKey">Save</button>
+      <button type="button" class="ghost" id="clearKey">Remove</button>
+    </div>
+    <p class="hint">Stored only in this browser's localStorage and sent only to googleapis.com. See the README for how to create and restrict a key.</p>
+    <p class="hint" id="keyStatus"></p>
+  </section>
+
+  <form id="searchForm" class="panel" autocomplete="off">
+    <div class="grid">
+      <div class="field wide">
+        <label for="q">Keyword</label>
+        <input id="q" required placeholder="e.g. home workout, sourdough, react tutorial">
+      </div>
+      <div class="field">
+        <label for="days">Published within</label>
+        <select id="days"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">365 days</option></select>
+      </div>
+      <div class="field">
+        <label for="type">Video type</label>
+        <select id="type"><option value="any">Any</option><option value="short">Shorts (&lt; 60s)</option><option value="long">Long-form (≥ 60s)</option></select>
+      </div>
+      <div class="field">
+        <label for="maxSubs">Max channel subs</label>
+        <input id="maxSubs" value="50k" inputmode="text" placeholder="50k (blank = no limit)">
+      </div>
+      <div class="field">
+        <label for="minViews">Min views</label>
+        <input id="minViews" value="10k" inputmode="text" placeholder="10k">
+      </div>
+      <div class="field">
+        <label for="region">Region (optional)</label>
+        <input id="region" maxlength="2" placeholder="US" style="text-transform:uppercase">
+      </div>
+    </div>
+    <div class="row">
+      <button type="submit" id="searchBtn">Search</button>
+      <span class="hint">Each search costs ~100 quota units.</span>
+    </div>
+  </section>
+
+  <div id="message" class="message" role="status" hidden></div>
+
+  <nav class="tabs" role="tablist">
+    <button type="button" role="tab" id="tabResults" aria-selected="true">Results <span class="count" id="resultsCount">0</span></button>
+    <button type="button" role="tab" id="tabSaved" aria-selected="false">Saved <span class="count" id="savedCount">0</span></button>
+  </nav>
+
+  <div class="toolbar">
+    <label for="sort" class="inline">Sort by</label>
+    <select id="sort">
+      <option value="score">Outlier score</option>
+      <option value="views">Views</option>
+      <option value="vpd">Views / day</option>
+      <option value="newest">Newest</option>
+    </select>
+    <button type="button" class="ghost" id="exportBtn">Export CSV</button>
+    <button type="button" class="ghost" id="clearSaved" hidden>Clear saved</button>
+  </div>
+
+  <p class="hint" id="summary"></p>
+  <div id="cards" class="cards"></div>
+  <div class="center"><button type="button" id="moreBtn" hidden>Load more</button></div>
+</main>
+
+<footer>Not affiliated with YouTube or Google. Score = views ÷ max(subscribers, 100).</footer>
+<script src="lib.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "now": "2026-09-28T00:00:00Z",
+  "videos": [
+    { "id": "vidSmallHit", "snippet": { "channelId": "chSmall", "channelTitle": "Tiny Woodshop", "title": "How I built a desk, \"cheap\"", "publishedAt": "2026-09-18T00:00:00Z", "thumbnails": { "medium": { "url": "https://i.ytimg.com/vi/vidSmallHit/mqdefault.jpg" } } },
+      "statistics": { "viewCount": "87000" }, "contentDetails": { "duration": "PT12M5S" } },
+    { "id": "vidShort", "snippet": { "channelId": "chSmall", "channelTitle": "Tiny Woodshop", "title": "=SUM(1,1) quick tip", "publishedAt": "2026-09-27T12:00:00Z", "thumbnails": { "default": { "url": "https://i.ytimg.com/vi/vidShort/default.jpg" } } },
+      "statistics": { "viewCount": "5000" }, "contentDetails": { "duration": "PT45S" } },
+    { "id": "vidBigChan", "snippet": { "channelId": "chBig", "channelTitle": "Mega Media", "title": "Huge channel video", "publishedAt": "2026-09-01T00:00:00Z", "thumbnails": {} },
+      "statistics": { "viewCount": "9000000" }, "contentDetails": { "duration": "PT1H2M3S" } },
+    { "id": "vidHidden", "snippet": { "channelId": "chHidden", "channelTitle": "Secret Subs", "title": "Hidden subs video", "publishedAt": "2026-09-10T00:00:00Z", "thumbnails": {} },
+      "statistics": { "viewCount": "300000" }, "contentDetails": { "duration": "PT8M" } },
+    { "id": "vidZeroSubs", "snippet": { "channelId": "chZero", "channelTitle": "Brand New", "title": "First upload", "publishedAt": "2026-09-20T00:00:00Z", "thumbnails": {} },
+      "statistics": { "viewCount": "2000" }, "contentDetails": { "duration": "PT3M" } }
+  ],
+  "channels": [
+    { "id": "chSmall", "statistics": { "subscriberCount": "1000", "hiddenSubscriberCount": false } },
+    { "id": "chBig", "statistics": { "subscriberCount": "5000000", "hiddenSubscriberCount": false } },
+    { "id": "chHidden", "statistics": { "hiddenSubscriberCount": true } },
+    { "id": "chZero", "statistics": { "subscriberCount": "3", "hiddenSubscriberCount": false } }
+  ],
+  "apiErrors": {
+    "quota": { "status": 403, "body": { "error": { "message": "quota", "errors": [{ "reason": "quotaExceeded" }] } } },
+    "badKey": { "status": 400, "body": { "error": { "message": "API key not valid. Please pass a valid API key.", "errors": [{ "reason": "badRequest" }] } } }
+  }
+}
