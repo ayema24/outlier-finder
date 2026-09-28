@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Outlier Finder</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <header class="top">
@@ -36,8 +36,17 @@
   </section>
 
   <section class="niches" aria-labelledby="nicheTitle">
-    <h3 id="nicheTitle">Explore niches</h3>
+    <h3 id="nicheTitle">Suggested niches <span class="hint-inline">tap one to see its best outliers</span></h3>
     <div class="chips" id="niches"></div>
+  </section>
+
+  <section class="inspo" id="inspo" hidden>
+    <div class="inspo-head">
+      <h3>Inspiration <span class="hint-inline" id="inspoNiche"></span></h3>
+      <button type="button" class="ghost" id="shuffleBtn">🔀 Shuffle (~100 units)</button>
+    </div>
+    <p class="hint" id="inspoMsg" hidden></p>
+    <div class="cards" id="inspoCards"></div>
   </section>
 
   <form id="searchForm" class="panel" autocomplete="off">
@@ -98,7 +107,7 @@
 </main>
 
 <footer>Not affiliated with YouTube or Google. Score = views ÷ max(subscribers, 100).</footer>
-<script src="lib.js"></script>
-<script src="app.js"></script>
+<script src="lib.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

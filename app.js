@@ -152,6 +152,7 @@
       if (state.hiddenSubs) s += ' Skipped ' + state.hiddenSubs + ' video' + (state.hiddenSubs > 1 ? 's' : '') + ' from channels with hidden subscriber counts.';
     } else if (state.view === 'saved' && !state.saved.length) s = 'Nothing saved yet.';
     $('summary').textContent = s;
+    if (inspo.rows.length) renderInspo();
   }
 
   function switchView(v) {
@@ -178,6 +179,52 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
 
+  // ---- inspiration feed (random small-channel hits, cached to save quota) ----
+  var INSPO_STORE = 'of.inspo', INSPO_TTL = 6 * 3600 * 1000, INSPO_COUNT = 6;
+  var inspo = { rows: [], niche: '' };
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  function renderInspo() {
+    var box = $('inspoCards'); box.textContent = '';
+    inspo.rows.forEach(function (r) { box.appendChild(card(r)); });
+    $('inspoNiche').textContent = inspo.niche ? '· random pick from ' + inspo.niche : '';
+  }
+  function inspoMsg(t) { var m = $('inspoMsg'); m.textContent = t || ''; m.hidden = !t; }
+
+  function loadInspiration(force) {
+    var sec = $('inspo');
+    if (!getKey()) { sec.hidden = true; return; }
+    sec.hidden = false;
+    if (!force) {
+      try {
+        var c = JSON.parse(store(INSPO_STORE) || 'null');
+        if (c && Date.now() - c.t < INSPO_TTL && c.rows && c.rows.length) { inspo = { rows: c.rows, niche: c.niche }; return renderInspo(); }
+      } catch (e) {}
+    }
+    var n = OF.NICHES[Math.floor(Math.random() * OF.NICHES.length)];
+    $('shuffleBtn').disabled = true; inspoMsg('Finding inspiration in ' + n.name + '…');
+    api('search', {
+      part: 'snippet', type: 'video', order: 'viewCount', maxResults: 50, q: n.q,
+      publishedAfter: new Date(Date.now() - 30 * 86400000).toISOString()
+    }, OF.QUOTA.search).then(function (s) {
+      var ids = (s.items || []).map(function (i) { return i.id && i.id.videoId; }).filter(Boolean);
+      if (!ids.length) return [];
+      return fetchBatched('videos', 'snippet,statistics,contentDetails', ids).then(function (videos) {
+        var chIds = Array.from(new Set(videos.map(function (v) { return v.snippet.channelId; })));
+        return fetchBatched('channels', 'statistics', chIds).then(function (channels) {
+          return OF.buildRows(videos, channels, { maxSubs: 100000, minViews: 5000 }).rows;
+        });
+      });
+    }).then(function (rows) {
+      var top = OF.sortRows(rows, 'score').slice(0, 12);
+      inspo = { rows: shuffle(top).slice(0, INSPO_COUNT), niche: n.name };
+      if (inspo.rows.length) store(INSPO_STORE, JSON.stringify({ t: Date.now(), niche: n.name, rows: inspo.rows }));
+      inspoMsg(inspo.rows.length ? '' : 'No small-channel hits found in ' + n.name + ' this time. Try Shuffle.');
+      renderInspo();
+    }).catch(function (e) { inspoMsg('Could not load inspiration: ' + e.message); })
+      .then(function () { $('shuffleBtn').disabled = false; });
+  }
+
   // ---- niches ----
   function renderNiches() {
     var box = $('niches');
@@ -201,6 +248,7 @@
   // ---- events ----
   $('searchForm').addEventListener('submit', function (e) { e.preventDefault(); runSearch(false); });
   $('moreBtn').addEventListener('click', function () { runSearch(true); });
+  $('shuffleBtn').addEventListener('click', function () { loadInspiration(true); });
   $('sort').addEventListener('change', render);
   $('q').addEventListener('input', function () { Array.prototype.forEach.call(document.querySelectorAll('.chip.active'), function (c) { c.classList.remove('active'); }); });
   $('tabResults').addEventListener('click', function () { switchView('results'); });
@@ -215,9 +263,9 @@
   $('saveKey').addEventListener('click', function () {
     var k = $('apiKey').value.trim();
     if (!k) return show('Paste a key first.', true);
-    store(KEY_STORE, k); $('apiKey').value = ''; updateKeyStatus(); show('API key saved in this browser.');
+    store(KEY_STORE, k); $('apiKey').value = ''; updateKeyStatus(); show('API key saved in this browser.'); loadInspiration(false);
   });
-  $('clearKey').addEventListener('click', function () { store(KEY_STORE, null); updateKeyStatus(); show('API key removed.'); });
+  $('clearKey').addEventListener('click', function () { store(KEY_STORE, null); updateKeyStatus(); show('API key removed.'); loadInspiration(false); });
   $('themeBtn').addEventListener('click', function () {
     var cur = document.documentElement.getAttribute('data-theme') ||
       (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -226,5 +274,6 @@
   });
 
   renderNiches(); updateKeyStatus(); updateQuota(); render();
+  loadInspiration(false);
   if (!getKey()) { $('settings').hidden = false; $('settingsBtn').setAttribute('aria-expanded', 'true'); }
 })();

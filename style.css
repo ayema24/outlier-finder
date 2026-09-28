@@ -91,3 +91,7 @@ button:not(.ghost):hover:not(:disabled) { filter: brightness(1.08); }
 input:focus, select:focus { border-color: #8b5cf6; outline: 2px solid rgba(139,92,246,.4); }
 @media (max-width: 520px) { .chips { flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px; padding: 4px 12px 8px; scrollbar-width: none; } .chip { flex: 0 0 auto; } }
 .tabs { margin-top: 18px; } .hint { line-height: 1.4; }
+.hint-inline { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: 6px; opacity: .8; }
+.inspo { margin-bottom: 20px; }
+.inspo-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.inspo h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
