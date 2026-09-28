@@ -8,7 +8,13 @@ Everything runs in your browser (HTML + vanilla JS + CSS). Your API key is store
 
 ## Features
 
-- Search by keyword, publish window (7/30/90/365 days), type (any / Shorts under 60s / long-form), max channel subscribers, min views and optional region code.
+- Search by keyword, publish window (7/30/90/365 days), format, max channel subscribers, min views and optional region code.
+- **Shorts detection** (Shorts can be up to 3 minutes since Oct 2024, and the API has no "is Short" flag):
+  1. Over 3 minutes means long-form.
+  2. At 3 minutes or less, the player's shape decides. `videos.list` is asked for `part=player` with `maxHeight`, and a taller-than-wide embed means a Short. This costs no extra quota.
+  3. With no shape info, a `#shorts` tag decides, then the old 60-second rule.
+- Format filter: Any, Shorts, Long-form (all), or long-form under 4 / 4–20 / 20+ minutes. These map to `search.list` `videoDuration`, so fewer results are wasted.
+- An All / Shorts / Long-form switch on the results ranks each format on its own, because Shorts rack up views much faster.
 - Uses `search.list` (`order=viewCount`, 50 per page, "Load more" via `pageToken`), then `videos.list` and `channels.list` batched 50 IDs per call.
 - Cards sorted by score, views, views/day or newest.
 - Channels with hidden subscriber counts are skipped, and the UI tells you how many.

@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -69,7 +69,14 @@
         </div>
         <div class="field">
           <label for="type">Video type</label>
-          <select id="type" form="searchForm"><option value="any">Any</option><option value="short">Shorts (&lt; 60s)</option><option value="long">Long-form (≥ 60s)</option></select>
+          <select id="type" form="searchForm">
+            <option value="any">Any</option>
+            <option value="short">Shorts (vertical, ≤ 3 min)</option>
+            <option value="long">Long-form (all lengths)</option>
+            <option value="long4">Long-form under 4 min</option>
+            <option value="long20">Long-form 4–20 min</option>
+            <option value="longXL">Long-form 20+ min</option>
+          </select>
         </div>
         <div class="field">
           <label for="maxSubs">Max channel subs</label>
@@ -137,6 +144,11 @@
           <option value="vpd">⚡ Views / day</option>
           <option value="newest">🕒 Newest</option>
         </select>
+        <div class="fmt-switch" id="fmtSwitch" role="group" aria-label="Show format" hidden>
+          <button type="button" data-fmt="all" aria-pressed="true">All <span class="count">0</span></button>
+          <button type="button" data-fmt="short" aria-pressed="false">Shorts <span class="count">0</span></button>
+          <button type="button" data-fmt="long" aria-pressed="false">Long-form <span class="count">0</span></button>
+        </div>
         <button type="button" class="btn ghost" id="exportBtn">⬇ CSV</button>
         <button type="button" class="btn ghost" id="clearSaved" hidden>Clear saved</button>
       </div>
@@ -171,7 +183,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <footer>Not affiliated with YouTube or Google · Score = views ÷ max(subscribers, 100)</footer>
-<script src="lib.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="lib.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

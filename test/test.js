@@ -120,4 +120,44 @@ t('scoreTier', () => {
   assert.strictEqual(OF.scoreTier(6), 'warm');
   assert.strictEqual(OF.scoreTier(1.2), 'mild');
 });
+const vid = (id, dur, extra = {}) => ({ id, snippet: Object.assign({ channelId: 'chSmall', channelTitle: 'T', title: 'clip ' + id, publishedAt: '2026-09-20T00:00:00Z' }, extra.snippet),
+  statistics: { viewCount: '50000' }, contentDetails: { duration: dur }, player: extra.player });
+const tall = { embedWidth: '405', embedHeight: '720' }, wide = { embedWidth: 1280, embedHeight: 720 };
+t('classifyFormat: shape decides up to 3 minutes', () => {
+  assert.deepStrictEqual(OF.classifyFormat(vid('a', 'PT2M30S', { player: tall })), { isShort: true, signal: 'shape' });
+  assert.deepStrictEqual(OF.classifyFormat(vid('b', 'PT45S', { player: wide })), { isShort: false, signal: 'shape' });
+  assert.deepStrictEqual(OF.classifyFormat(vid('c', 'PT3M', { player: tall })), { isShort: true, signal: 'shape' });
+});
+t('classifyFormat: over 3 minutes is never a Short, even if vertical', () => {
+  assert.deepStrictEqual(OF.classifyFormat(vid('d', 'PT3M1S', { player: tall })), { isShort: false, signal: 'length' });
+  assert.strictEqual(OF.classifyFormat(vid('e', 'P0D')).isShort, false); // live / unknown length
+});
+t('classifyFormat: no shape falls back to #shorts tag, then 60s', () => {
+  assert.deepStrictEqual(OF.classifyFormat(vid('f', 'PT2M', { snippet: { title: 'wow #Shorts' } })), { isShort: true, signal: 'tag' });
+  assert.strictEqual(OF.classifyFormat(vid('g', 'PT2M', { snippet: { tags: ['shorts'] } })).isShort, true);
+  assert.strictEqual(OF.classifyFormat(vid('h', 'PT2M', { snippet: { title: '#shortstory time' } })).isShort, false);
+  assert.strictEqual(OF.classifyFormat(vid('i', 'PT50S')).isShort, true);
+  assert.strictEqual(OF.classifyFormat(vid('j', 'PT2M')).isShort, false);
+});
+t('buildRows: format filters and length buckets', () => {
+  const vids = [vid('s150', 'PT2M30S', { player: tall }), vid('w90', 'PT1M30S', { player: wide }),
+    vid('m10', 'PT10M', { player: wide }), vid('x45', 'PT45M', { player: wide })];
+  const ids = type => OF.buildRows(vids, mock.channels, { now, type }).rows.map(r => r.id);
+  assert.deepStrictEqual(ids('short'), ['s150']);
+  assert.deepStrictEqual(ids('long'), ['w90', 'm10', 'x45']);
+  assert.deepStrictEqual(ids('long4'), ['w90']);
+  assert.deepStrictEqual(ids('long20'), ['m10']);
+  assert.deepStrictEqual(ids('longXL'), ['x45']);
+  assert.strictEqual(ids('any').length, 4);
+  const row = OF.buildRows(vids, mock.channels, { now }).rows[0];
+  assert.strictEqual(row.isShort, true);
+  assert.strictEqual(row.vertical, true);
+  Object.keys(OF.FORMATS).forEach(k => { const a = OF.FORMATS[k].api; assert.ok(!a || ['short', 'medium', 'long'].includes(a)); });
+});
+t('rowIsShort handles rows saved before detection existed', () => {
+  assert.strictEqual(OF.rowIsShort({ duration: 45 }), true);
+  assert.strictEqual(OF.rowIsShort({ duration: 90 }), false);
+  assert.strictEqual(OF.rowIsShort({ duration: 90, isShort: true }), true);
+  assert.strictEqual(OF.rowIsShort({ duration: 0 }), false);
+});
 console.log(`\n${n} tests passed`);
