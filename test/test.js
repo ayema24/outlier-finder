@@ -92,4 +92,11 @@ t('chunk batches of 50', () => {
   const ids = Array.from({ length: 120 }, (_, i) => i);
   assert.deepStrictEqual(OF.chunk(ids, 50).map(c => c.length), [50, 50, 20]);
 });
+t('niches are well-formed and unique', () => {
+  assert.ok(OF.NICHES.length >= 10);
+  const names = new Set(OF.NICHES.map(x => x.name)), qs = new Set(OF.NICHES.map(x => x.q));
+  assert.strictEqual(names.size, OF.NICHES.length);
+  assert.strictEqual(qs.size, OF.NICHES.length);
+  OF.NICHES.forEach(x => assert.ok(x.name && x.icon && x.q.trim()));
+});
 console.log(`\n${n} tests passed`);

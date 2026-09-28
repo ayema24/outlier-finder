@@ -5,6 +5,27 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
+  var NICHES = [
+    { name: 'True Crime', icon: '🕵️', q: 'true crime documentary' },
+    { name: 'Documentaries', icon: '🎬', q: 'documentary' },
+    { name: 'History', icon: '🏛️', q: 'history explained' },
+    { name: 'Personal Finance', icon: '💰', q: 'personal finance investing' },
+    { name: 'Side Hustles', icon: '🚀', q: 'side hustle make money online' },
+    { name: 'AI & Tech', icon: '🤖', q: 'ai tools tutorial' },
+    { name: 'Gaming', icon: '🎮', q: 'gaming' },
+    { name: 'Fitness', icon: '💪', q: 'home workout' },
+    { name: 'Cooking', icon: '🍳', q: 'easy recipes cooking' },
+    { name: 'Travel', icon: '✈️', q: 'travel vlog' },
+    { name: 'Self Improvement', icon: '🧠', q: 'self improvement productivity' },
+    { name: 'Science', icon: '🔬', q: 'science explained' },
+    { name: 'Horror & Mystery', icon: '👻', q: 'scary stories mystery' },
+    { name: 'Storytime', icon: '🗣️', q: 'storytime' },
+    { name: 'DIY & Woodworking', icon: '🔨', q: 'diy woodworking build' },
+    { name: 'Cars', icon: '🚗', q: 'car review' },
+    { name: 'Real Estate', icon: '🏠', q: 'real estate investing' },
+    { name: 'Music', icon: '🎵', q: 'music production' }
+  ];
+
   var QUOTA = { search: 100, list: 1 };
   var MIN_SUBS_FLOOR = 100;
   var DAY_MS = 86400000;
@@ -184,7 +205,7 @@
   }
 
   return {
-    QUOTA: QUOTA, parseDuration: parseDuration, formatDuration: formatDuration,
+    QUOTA: QUOTA, NICHES: NICHES, parseDuration: parseDuration, formatDuration: formatDuration,
     formatCount: formatCount, formatScore: formatScore, formatAge: formatAge,
     ageDays: ageDays, outlierScore: outlierScore, viewsPerDay: viewsPerDay,
     parseCount: parseCount, buildRows: buildRows, sortRows: sortRows, mergeRows: mergeRows,

@@ -178,10 +178,31 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
 
+  // ---- niches ----
+  function renderNiches() {
+    var box = $('niches');
+    OF.NICHES.forEach(function (n) {
+      var b = el('button', 'chip');
+      b.type = 'button'; b.dataset.q = n.q;
+      b.appendChild(el('span', 'chip-icon', n.icon)); b.appendChild(el('span', null, n.name));
+      b.addEventListener('click', function () { pickNiche(n, b); });
+      box.appendChild(b);
+    });
+  }
+  function pickNiche(n, btn) {
+    if (state.busy) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (c) { c.classList.toggle('active', c === btn); });
+    $('q').value = n.q;
+    $('sort').value = 'score';
+    $('searchForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    runSearch(false);
+  }
+
   // ---- events ----
   $('searchForm').addEventListener('submit', function (e) { e.preventDefault(); runSearch(false); });
   $('moreBtn').addEventListener('click', function () { runSearch(true); });
   $('sort').addEventListener('change', render);
+  $('q').addEventListener('input', function () { Array.prototype.forEach.call(document.querySelectorAll('.chip.active'), function (c) { c.classList.remove('active'); }); });
   $('tabResults').addEventListener('click', function () { switchView('results'); });
   $('tabSaved').addEventListener('click', function () { switchView('saved'); });
   $('exportBtn').addEventListener('click', exportCSV);
@@ -204,6 +225,6 @@
     applyTheme(next); store(THEME_STORE, next);
   });
 
-  updateKeyStatus(); updateQuota(); render();
+  renderNiches(); updateKeyStatus(); updateQuota(); render();
   if (!getKey()) { $('settings').hidden = false; $('settingsBtn').setAttribute('aria-expanded', 'true'); }
 })();

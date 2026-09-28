@@ -9,7 +9,7 @@
 </head>
 <body>
 <header class="top">
-  <h1>Outlier Finder</h1>
+  <h1><span class="logo">◎</span> Outlier Finder</h1>
   <div class="top-actions">
     <span class="quota" id="quota" title="Approximate; the real quota is tracked by Google. Default limit is 10,000/day.">Quota: 0 units</span>
     <button type="button" class="ghost" id="themeBtn" aria-label="Toggle dark mode">◐</button>
@@ -28,6 +28,16 @@
     </div>
     <p class="hint">Stored only in this browser's localStorage and sent only to googleapis.com. See the README for how to create and restrict a key.</p>
     <p class="hint" id="keyStatus"></p>
+  </section>
+
+  <section class="hero">
+    <h2>Find videos that punch above their channel size</h2>
+    <p>Small channels, huge views. Pick a niche to see its best outliers, or search your own keyword below.</p>
+  </section>
+
+  <section class="niches" aria-labelledby="nicheTitle">
+    <h3 id="nicheTitle">Explore niches</h3>
+    <div class="chips" id="niches"></div>
   </section>
 
   <form id="searchForm" class="panel" autocomplete="off">
