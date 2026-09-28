@@ -2,112 +2,176 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a0914">
+<meta name="description" content="Find YouTube videos from small channels that got way more views than they should have.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Outlier Finder</title>
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
+<div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="grain" aria-hidden="true"></div>
+
 <header class="top">
-  <h1><span class="logo">◎</span> Outlier Finder</h1>
+  <a class="brand" href="#" aria-label="Outlier Finder home">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 17l5-5 4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.2" fill="currentColor"/></svg></span>
+    <span class="brand-name">Outlier<b>Finder</b></span>
+  </a>
   <div class="top-actions">
-    <span class="quota" id="quota" title="Approximate; the real quota is tracked by Google. Default limit is 10,000/day.">Quota: 0 units</span>
-    <button type="button" class="ghost" id="themeBtn" aria-label="Toggle dark mode">◐</button>
-    <button type="button" class="ghost" id="settingsBtn" aria-expanded="false" aria-controls="settings">⚙ Settings</button>
+    <span class="quota" id="quota" title="Approximate; the real quota is tracked by Google. Default limit is 10,000/day.">0 units</span>
+    <button type="button" class="icon-btn" id="themeBtn" aria-label="Toggle light or dark mode">◐</button>
+    <button type="button" class="icon-btn" id="settingsBtn" aria-expanded="false" aria-controls="settings" aria-label="Settings">⚙</button>
   </div>
 </header>
 
 <main>
-  <section id="settings" class="panel" hidden>
-    <h2>Settings</h2>
-    <label for="apiKey">YouTube Data API v3 key</label>
-    <div class="row">
-      <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your API key">
-      <button type="button" id="saveKey">Save</button>
-      <button type="button" class="ghost" id="clearKey">Remove</button>
+  <section id="settings" class="panel glass settings" hidden>
+    <div class="panel-head">
+      <h2>🔑 Your YouTube API key</h2>
+      <span class="key-status" id="keyStatus"></span>
     </div>
-    <p class="hint">Stored only in this browser's localStorage and sent only to googleapis.com. See the README for how to create and restrict a key.</p>
-    <p class="hint" id="keyStatus"></p>
+    <div class="row">
+      <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your YouTube Data API v3 key">
+      <button type="button" class="btn" id="saveKey">Save key</button>
+      <button type="button" class="btn ghost" id="clearKey">Remove</button>
+    </div>
+    <p class="hint">Stored only in this browser and sent only to googleapis.com. The README explains how to create and restrict a key.</p>
   </section>
 
   <section class="hero">
-    <h2>Find videos that punch above their channel size</h2>
-    <p>Small channels, huge views. Pick a niche to see its best outliers, or search your own keyword below.</p>
+    <span class="eyebrow"><i class="pulse"></i> Small channels · huge views</span>
+    <h1>Find the videos that <span class="grad-text">punch 100× above</span> their weight.</h1>
+    <p class="lede">Outlier Finder scans YouTube for videos that beat their channel size by a mile, so you can study what's working right now.</p>
+
+    <form id="searchForm" class="searchbar" autocomplete="off" role="search">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <label for="q" class="sr-only">Keyword</label>
+      <input id="q" required placeholder="Try “sourdough”, “ai agents”, “true crime”…">
+      <button type="submit" class="btn" id="searchBtn">Find outliers</button>
+    </form>
+
+    <details class="filters glass" id="filters">
+      <summary><span>⚡ Filters</span><span class="filter-summary" id="filterSummary"></span></summary>
+      <div class="grid">
+        <div class="field">
+          <label for="days">Published within</label>
+          <select id="days" form="searchForm"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">365 days</option></select>
+        </div>
+        <div class="field">
+          <label for="type">Video type</label>
+          <select id="type" form="searchForm"><option value="any">Any</option><option value="short">Shorts (&lt; 60s)</option><option value="long">Long-form (≥ 60s)</option></select>
+        </div>
+        <div class="field">
+          <label for="maxSubs">Max channel subs</label>
+          <input id="maxSubs" form="searchForm" value="50k" placeholder="50k (blank = no limit)">
+        </div>
+        <div class="field">
+          <label for="minViews">Min views</label>
+          <input id="minViews" form="searchForm" value="10k" placeholder="10k">
+        </div>
+        <div class="field">
+          <label for="region">Region</label>
+          <input id="region" form="searchForm" maxlength="2" placeholder="Any (e.g. US)" class="upper">
+        </div>
+      </div>
+      <p class="hint">Each search costs about 100 of your 10,000 daily quota units.</p>
+    </details>
+
+    <ul class="facts" aria-label="Highlights">
+      <li><b id="nicheCount">90</b> niches</li>
+      <li><b>8</b> categories</li>
+      <li><b>0</b> servers, runs in your browser</li>
+    </ul>
   </section>
 
-  <section class="niches" aria-labelledby="nicheTitle">
-    <h3 id="nicheTitle">Suggested niches <span class="hint-inline">tap one to see its best outliers</span></h3>
+  <div id="message" class="message" role="status" hidden></div>
+
+  <section class="explorer glass" aria-labelledby="nicheTitle">
+    <div class="section-head">
+      <div>
+        <h2 id="nicheTitle">Niche explorer</h2>
+        <p class="hint">Tap a niche to pull its biggest small-channel hits. <span class="rpm-legend"><span class="rpm r3">$$$</span> high ad rates</span></p>
+      </div>
+      <div class="explorer-tools">
+        <input id="nicheFilter" type="search" placeholder="Filter niches…" aria-label="Filter niches">
+        <button type="button" class="btn ghost" id="surpriseBtn">🎲 Surprise me</button>
+      </div>
+    </div>
+    <div class="cat-tabs" id="catTabs" role="tablist" aria-label="Niche categories"></div>
     <div class="chips" id="niches"></div>
   </section>
 
   <section class="inspo" id="inspo" hidden>
-    <div class="inspo-head">
-      <h3>Inspiration <span class="hint-inline" id="inspoNiche"></span></h3>
-      <button type="button" class="ghost" id="shuffleBtn">🔀 Shuffle (~100 units)</button>
+    <div class="section-head">
+      <div>
+        <h2>✨ Inspiration <span class="hint-inline" id="inspoNiche"></span></h2>
+        <p class="hint">Random breakout hits from small channels, refreshed every 6 hours.</p>
+      </div>
+      <button type="button" class="btn ghost" id="shuffleBtn">🔀 Shuffle <small>~100 units</small></button>
     </div>
     <p class="hint" id="inspoMsg" hidden></p>
     <div class="cards" id="inspoCards"></div>
   </section>
 
-  <form id="searchForm" class="panel" autocomplete="off">
-    <div class="grid">
-      <div class="field wide">
-        <label for="q">Keyword</label>
-        <input id="q" required placeholder="e.g. home workout, sourdough, react tutorial">
-      </div>
-      <div class="field">
-        <label for="days">Published within</label>
-        <select id="days"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">365 days</option></select>
-      </div>
-      <div class="field">
-        <label for="type">Video type</label>
-        <select id="type"><option value="any">Any</option><option value="short">Shorts (&lt; 60s)</option><option value="long">Long-form (≥ 60s)</option></select>
-      </div>
-      <div class="field">
-        <label for="maxSubs">Max channel subs</label>
-        <input id="maxSubs" value="50k" inputmode="text" placeholder="50k (blank = no limit)">
-      </div>
-      <div class="field">
-        <label for="minViews">Min views</label>
-        <input id="minViews" value="10k" inputmode="text" placeholder="10k">
-      </div>
-      <div class="field">
-        <label for="region">Region (optional)</label>
-        <input id="region" maxlength="2" placeholder="US" style="text-transform:uppercase">
+  <section class="results" id="results">
+    <div class="results-bar">
+      <nav class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabResults" aria-selected="true">Results <span class="count" id="resultsCount">0</span></button>
+        <button type="button" role="tab" id="tabSaved" aria-selected="false">Saved <span class="count" id="savedCount">0</span></button>
+      </nav>
+      <div class="toolbar">
+        <label for="sort" class="sr-only">Sort by</label>
+        <select id="sort">
+          <option value="score">🔥 Outlier score</option>
+          <option value="views">👁 Views</option>
+          <option value="vpd">⚡ Views / day</option>
+          <option value="newest">🕒 Newest</option>
+        </select>
+        <button type="button" class="btn ghost" id="exportBtn">⬇ CSV</button>
+        <button type="button" class="btn ghost" id="clearSaved" hidden>Clear saved</button>
       </div>
     </div>
-    <div class="row">
-      <button type="submit" id="searchBtn">Search</button>
-      <span class="hint">Each search costs ~100 quota units.</span>
+    <p class="hint" id="summary"></p>
+    <div id="cards" class="cards"></div>
+    <div class="empty" id="empty" hidden>
+      <div class="empty-orb" aria-hidden="true">◎</div>
+      <p id="emptyText">Pick a niche or search a keyword to start hunting outliers.</p>
     </div>
+    <div class="center"><button type="button" class="btn" id="moreBtn" hidden>Load more</button></div>
   </section>
-
-  <div id="message" class="message" role="status" hidden></div>
-
-  <nav class="tabs" role="tablist">
-    <button type="button" role="tab" id="tabResults" aria-selected="true">Results <span class="count" id="resultsCount">0</span></button>
-    <button type="button" role="tab" id="tabSaved" aria-selected="false">Saved <span class="count" id="savedCount">0</span></button>
-  </nav>
-
-  <div class="toolbar">
-    <label for="sort" class="inline">Sort by</label>
-    <select id="sort">
-      <option value="score">Outlier score</option>
-      <option value="views">Views</option>
-      <option value="vpd">Views / day</option>
-      <option value="newest">Newest</option>
-    </select>
-    <button type="button" class="ghost" id="exportBtn">Export CSV</button>
-    <button type="button" class="ghost" id="clearSaved" hidden>Clear saved</button>
-  </div>
-
-  <p class="hint" id="summary"></p>
-  <div id="cards" class="cards"></div>
-  <div class="center"><button type="button" id="moreBtn" hidden>Load more</button></div>
 </main>
 
-<footer>Not affiliated with YouTube or Google. Score = views ÷ max(subscribers, 100).</footer>
-<script src="lib.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+  <div class="lb-backdrop" data-close></div>
+  <div class="lb-body">
+    <div class="lb-frame" id="lbFrame"></div>
+    <div class="lb-meta">
+      <div>
+        <h3 id="lbTitle"></h3>
+        <p class="hint" id="lbSub"></p>
+      </div>
+      <div class="lb-actions">
+        <a class="btn ghost" id="lbOpen" target="_blank" rel="noopener noreferrer">Open on YouTube ↗</a>
+        <button type="button" class="btn ghost" data-close>Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<footer>Not affiliated with YouTube or Google · Score = views ÷ max(subscribers, 100)</footer>
+<script src="lib.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

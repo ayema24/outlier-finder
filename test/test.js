@@ -99,10 +99,25 @@ t('niches are well-formed and unique', () => {
   assert.strictEqual(qs.size, OF.NICHES.length);
   OF.NICHES.forEach(x => assert.ok(x.name && x.icon && x.q.trim()));
 });
-t('previewFrames builds 3 frame URLs', () => {
-  const f = OF.previewFrames('abc123');
-  assert.strictEqual(f.length, 3);
-  assert.strictEqual(f[0], 'https://i.ytimg.com/vi/abc123/mq1.jpg');
-  assert.strictEqual(f[2], 'https://i.ytimg.com/vi/abc123/mq3.jpg');
+t('niches reference a known category and rpm tier', () => {
+  const cats = new Set(OF.NICHE_CATS.map(c => c.id));
+  OF.NICHES.forEach(x => { assert.ok(cats.has(x.cat), x.name); assert.ok([1, 2, 3].includes(x.rpm), x.name); });
+  OF.NICHE_CATS.forEach(c => assert.ok(OF.NICHES.some(x => x.cat === c.id), c.id));
+});
+t('preview embed is muted, inline and skips intros', () => {
+  assert.strictEqual(OF.previewStart(45), 0);
+  assert.strictEqual(OF.previewStart(600), 120);
+  assert.strictEqual(OF.previewStart(300), 60);
+  const u = new URL(OF.previewEmbed('abc123', 300));
+  assert.strictEqual(u.origin + u.pathname, 'https://www.youtube-nocookie.com/embed/abc123');
+  ['autoplay', 'mute', 'playsinline', 'loop'].forEach(k => assert.strictEqual(u.searchParams.get(k), '1'));
+  assert.strictEqual(u.searchParams.get('playlist'), 'abc123');
+  assert.strictEqual(u.searchParams.get('start'), '60');
+});
+t('scoreTier', () => {
+  assert.strictEqual(OF.scoreTier(150), 'legendary');
+  assert.strictEqual(OF.scoreTier(30), 'hot');
+  assert.strictEqual(OF.scoreTier(6), 'warm');
+  assert.strictEqual(OF.scoreTier(1.2), 'mild');
 });
 console.log(`\n${n} tests passed`);

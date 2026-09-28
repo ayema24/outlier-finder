@@ -1,0 +1,11 @@
+{
+  "name": "Outlier Finder",
+  "short_name": "Outliers",
+  "description": "Find YouTube videos from small channels that got way more views than they should have.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0914",
+  "theme_color": "#0a0914",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
