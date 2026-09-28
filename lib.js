@@ -5,25 +5,115 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
+  /* Niche library. rpm = rough ad-revenue tier (3 = high, 1 = low), from 2026 RPM/CPM roundups. */
+  var NICHE_CATS = [
+    { id: 'money', name: 'Money & Business', icon: '💸' },
+    { id: 'tech', name: 'Tech & AI', icon: '🤖' },
+    { id: 'story', name: 'Stories & Mystery', icon: '🕯️' },
+    { id: 'learn', name: 'Learn & Explain', icon: '🧠' },
+    { id: 'life', name: 'Lifestyle & Health', icon: '🌿' },
+    { id: 'make', name: 'Make & Build', icon: '🛠️' },
+    { id: 'play', name: 'Gaming & Fun', icon: '🎮' },
+    { id: 'formats', name: 'Viral Formats', icon: '🔥' }
+  ];
   var NICHES = [
-    { name: 'True Crime', icon: '🕵️', q: 'true crime documentary' },
-    { name: 'Documentaries', icon: '🎬', q: 'documentary' },
-    { name: 'History', icon: '🏛️', q: 'history explained' },
-    { name: 'Personal Finance', icon: '💰', q: 'personal finance investing' },
-    { name: 'Side Hustles', icon: '🚀', q: 'side hustle make money online' },
-    { name: 'AI & Tech', icon: '🤖', q: 'ai tools tutorial' },
-    { name: 'Gaming', icon: '🎮', q: 'gaming' },
-    { name: 'Fitness', icon: '💪', q: 'home workout' },
-    { name: 'Cooking', icon: '🍳', q: 'easy recipes cooking' },
-    { name: 'Travel', icon: '✈️', q: 'travel vlog' },
-    { name: 'Self Improvement', icon: '🧠', q: 'self improvement productivity' },
-    { name: 'Science', icon: '🔬', q: 'science explained' },
-    { name: 'Horror & Mystery', icon: '👻', q: 'scary stories mystery' },
-    { name: 'Storytime', icon: '🗣️', q: 'storytime' },
-    { name: 'DIY & Woodworking', icon: '🔨', q: 'diy woodworking build' },
-    { name: 'Cars', icon: '🚗', q: 'car review' },
-    { name: 'Real Estate', icon: '🏠', q: 'real estate investing' },
-    { name: 'Music', icon: '🎵', q: 'music production' }
+    // money
+    { name: 'Personal Finance', icon: '💰', q: 'personal finance investing', cat: 'money', rpm: 3 },
+    { name: 'Side Hustles', icon: '🚀', q: 'side hustle make money online', cat: 'money', rpm: 3 },
+    { name: 'Real Estate', icon: '🏠', q: 'real estate investing', cat: 'money', rpm: 3 },
+    { name: 'Stock Market', icon: '📈', q: 'stock market explained', cat: 'money', rpm: 3 },
+    { name: 'Crypto', icon: '🪙', q: 'crypto news bitcoin', cat: 'money', rpm: 3 },
+    { name: 'Taxes & Legal', icon: '⚖️', q: 'tax tips explained', cat: 'money', rpm: 3 },
+    { name: 'Business Stories', icon: '🏢', q: 'business documentary rise and fall', cat: 'money', rpm: 3 },
+    { name: 'Entrepreneurship', icon: '🧑‍💼', q: 'starting a small business', cat: 'money', rpm: 3 },
+    { name: 'E-commerce', icon: '🛒', q: 'ecommerce shopify dropshipping', cat: 'money', rpm: 3 },
+    { name: 'Careers & Jobs', icon: '💼', q: 'career advice job interview tips', cat: 'money', rpm: 2 },
+    { name: 'Frugal Living', icon: '🪙', q: 'frugal living save money tips', cat: 'money', rpm: 2 },
+    { name: 'Luxury & Wealth', icon: '💎', q: 'billionaire lifestyle luxury', cat: 'money', rpm: 2 },
+    // tech
+    { name: 'AI Tools', icon: '🤖', q: 'ai tools tutorial', cat: 'tech', rpm: 3 },
+    { name: 'AI Automation', icon: '⚙️', q: 'ai agents automation small business', cat: 'tech', rpm: 3 },
+    { name: 'Cybersecurity', icon: '🔐', q: 'cybersecurity online privacy', cat: 'tech', rpm: 3 },
+    { name: 'Coding', icon: '💻', q: 'coding tutorial for beginners', cat: 'tech', rpm: 3 },
+    { name: 'Software & SaaS', icon: '🧩', q: 'software review productivity apps', cat: 'tech', rpm: 3 },
+    { name: 'Tech Reviews', icon: '📱', q: 'tech review smartphone', cat: 'tech', rpm: 2 },
+    { name: 'PC Building', icon: '🖥️', q: 'pc build budget gaming pc', cat: 'tech', rpm: 2 },
+    { name: 'Tech News', icon: '📰', q: 'tech news this week', cat: 'tech', rpm: 2 },
+    { name: 'Excel & Productivity', icon: '📊', q: 'excel tips productivity tricks', cat: 'tech', rpm: 3 },
+    // story
+    { name: 'True Crime', icon: '🕵️', q: 'true crime documentary', cat: 'story', rpm: 2 },
+    { name: 'Horror & Mystery', icon: '👻', q: 'scary stories mystery', cat: 'story', rpm: 1 },
+    { name: 'Unsolved Mysteries', icon: '❓', q: 'unsolved mysteries explained', cat: 'story', rpm: 2 },
+    { name: 'Conspiracies', icon: '🛸', q: 'conspiracy theory deep dive', cat: 'story', rpm: 1 },
+    { name: 'Storytime', icon: '🗣️', q: 'storytime', cat: 'story', rpm: 1 },
+    { name: 'Reddit Stories', icon: '📜', q: 'reddit stories aita', cat: 'story', rpm: 1 },
+    { name: 'Survival Stories', icon: '🏔️', q: 'survival story i survived', cat: 'story', rpm: 2 },
+    { name: 'Disasters', icon: '🌋', q: 'disaster documentary what went wrong', cat: 'story', rpm: 2 },
+    { name: 'Internet Drama', icon: '🍿', q: 'youtuber drama explained', cat: 'story', rpm: 1 },
+    // learn
+    { name: 'Documentaries', icon: '🎬', q: 'documentary', cat: 'learn', rpm: 2 },
+    { name: 'History', icon: '🏛️', q: 'history explained', cat: 'learn', rpm: 2 },
+    { name: 'Science', icon: '🔬', q: 'science explained', cat: 'learn', rpm: 2 },
+    { name: 'Space', icon: '🪐', q: 'space universe explained', cat: 'learn', rpm: 2 },
+    { name: 'Geography', icon: '🗺️', q: 'geography countries explained', cat: 'learn', rpm: 2 },
+    { name: 'Psychology', icon: '🧩', q: 'psychology facts human behavior', cat: 'learn', rpm: 2 },
+    { name: 'Philosophy', icon: '🦉', q: 'philosophy stoicism', cat: 'learn', rpm: 2 },
+    { name: 'Video Essays', icon: '🎞️', q: 'video essay analysis', cat: 'learn', rpm: 2 },
+    { name: 'Language Learning', icon: '🗣', q: 'learn english language learning', cat: 'learn', rpm: 2 },
+    { name: 'Military & Aviation', icon: '✈️', q: 'military aviation history', cat: 'learn', rpm: 2 },
+    { name: 'Engineering', icon: '🏗️', q: 'engineering explained how it works', cat: 'learn', rpm: 3 },
+    { name: 'Faith & Bible', icon: '🙏', q: 'bible stories explained', cat: 'learn', rpm: 1 },
+    // life
+    { name: 'Fitness', icon: '💪', q: 'home workout', cat: 'life', rpm: 2 },
+    { name: 'Nutrition', icon: '🥗', q: 'nutrition healthy eating tips', cat: 'life', rpm: 2 },
+    { name: 'Health & Longevity', icon: '🫀', q: 'longevity health tips doctor', cat: 'life', rpm: 3 },
+    { name: 'Mental Health', icon: '🧘', q: 'anxiety mental health tips', cat: 'life', rpm: 2 },
+    { name: 'Self Improvement', icon: '🌱', q: 'self improvement productivity', cat: 'life', rpm: 2 },
+    { name: 'Cooking', icon: '🍳', q: 'easy recipes cooking', cat: 'life', rpm: 2 },
+    { name: 'Travel', icon: '🧳', q: 'travel vlog', cat: 'life', rpm: 2 },
+    { name: 'Cost of Living', icon: '🏙️', q: 'cost of living abroad', cat: 'life', rpm: 2 },
+    { name: 'Van & Off-grid', icon: '🚐', q: 'van life off grid living', cat: 'life', rpm: 2 },
+    { name: 'Parenting', icon: '🍼', q: 'parenting tips', cat: 'life', rpm: 2 },
+    { name: 'Pets', icon: '🐶', q: 'dog training tips', cat: 'life', rpm: 2 },
+    { name: 'Skincare & Beauty', icon: '✨', q: 'skincare routine', cat: 'life', rpm: 2 },
+    { name: 'Fashion', icon: '👟', q: 'mens fashion style tips', cat: 'life', rpm: 2 },
+    { name: 'Minimalism', icon: '🤍', q: 'minimalism declutter', cat: 'life', rpm: 2 },
+    { name: 'Ambient & Sleep', icon: '🌙', q: 'rain sounds sleep ambience', cat: 'life', rpm: 1 },
+    // make
+    { name: 'DIY & Woodworking', icon: '🔨', q: 'diy woodworking build', cat: 'make', rpm: 2 },
+    { name: 'Home Renovation', icon: '🧱', q: 'home renovation before after', cat: 'make', rpm: 3 },
+    { name: 'Gardening', icon: '🪴', q: 'gardening tips grow vegetables', cat: 'make', rpm: 2 },
+    { name: 'Cars', icon: '🚗', q: 'car review', cat: 'make', rpm: 3 },
+    { name: 'Car Restoration', icon: '🔧', q: 'car restoration rebuild', cat: 'make', rpm: 2 },
+    { name: 'Art & Drawing', icon: '🎨', q: 'drawing tutorial art', cat: 'make', rpm: 1 },
+    { name: 'Music Production', icon: '🎛️', q: 'music production', cat: 'make', rpm: 2 },
+    { name: 'Guitar & Piano', icon: '🎸', q: 'guitar lesson beginner', cat: 'make', rpm: 2 },
+    { name: 'Photo & Video', icon: '📷', q: 'filmmaking photography tips', cat: 'make', rpm: 2 },
+    { name: 'Restoration ASMR', icon: '🧽', q: 'restoration asmr', cat: 'make', rpm: 1 },
+    { name: '3D Printing', icon: '🖨️', q: '3d printing projects', cat: 'make', rpm: 2 },
+    // play
+    { name: 'Gaming', icon: '🎮', q: 'gaming', cat: 'play', rpm: 1 },
+    { name: 'Minecraft', icon: '⛏️', q: 'minecraft', cat: 'play', rpm: 1 },
+    { name: 'Retro Games', icon: '👾', q: 'retro games history', cat: 'play', rpm: 1 },
+    { name: 'Game Lore', icon: '📖', q: 'game lore explained', cat: 'play', rpm: 1 },
+    { name: 'Speedruns', icon: '⏱️', q: 'speedrun explained', cat: 'play', rpm: 1 },
+    { name: 'Chess', icon: '♟️', q: 'chess', cat: 'play', rpm: 2 },
+    { name: 'Movies & TV', icon: '🍿', q: 'movie explained ending', cat: 'play', rpm: 2 },
+    { name: 'Anime', icon: '🌸', q: 'anime explained', cat: 'play', rpm: 1 },
+    { name: 'Sports', icon: '⚽', q: 'sports highlights analysis', cat: 'play', rpm: 2 },
+    { name: 'Fishing & Outdoors', icon: '🎣', q: 'fishing', cat: 'play', rpm: 2 },
+    { name: 'Collectibles', icon: '🃏', q: 'pokemon cards opening collection', cat: 'play', rpm: 1 },
+    // formats
+    { name: 'Tier Lists', icon: '🏆', q: 'tier list ranking', cat: 'formats', rpm: 2 },
+    { name: 'I Tried…', icon: '🧪', q: 'i tried for 30 days', cat: 'formats', rpm: 2 },
+    { name: 'Cheap vs Expensive', icon: '🏷️', q: 'cheap vs expensive', cat: 'formats', rpm: 2 },
+    { name: 'Honest Reviews', icon: '⭐', q: 'honest review worth it', cat: 'formats', rpm: 3 },
+    { name: 'Day in the Life', icon: '📅', q: 'day in my life', cat: 'formats', rpm: 1 },
+    { name: 'Things I Wish I Knew', icon: '💡', q: 'things i wish i knew before', cat: 'formats', rpm: 2 },
+    { name: 'Beginner Guides', icon: '🧭', q: 'complete beginners guide', cat: 'formats', rpm: 2 },
+    { name: 'Challenges', icon: '🎯', q: '24 hour challenge', cat: 'formats', rpm: 1 },
+    { name: 'Reactions', icon: '😲', q: 'reaction', cat: 'formats', rpm: 1 },
+    { name: 'Top 10 Lists', icon: '🔟', q: 'top 10', cat: 'formats', rpm: 2 }
   ];
 
   var QUOTA = { search: 100, list: 1 };
@@ -198,10 +288,32 @@
     return 'YouTube API error (' + status + ')' + (msg ? ': ' + msg : '.');
   }
 
-  /** YouTube auto-generated frames (start / middle / end) for hover previews. */
-  function previewFrames(id) {
-    var base = 'https://i.ytimg.com/vi/' + encodeURIComponent(id) + '/';
-    return [1, 2, 3].map(function (n) { return base + 'mq' + n + '.jpg'; });
+  /** Where an inline preview starts: skip intros on long videos, start Shorts at 0. */
+  function previewStart(durationSec) {
+    if (!durationSec || durationSec < 90) return 0;
+    return Math.min(Math.floor(durationSec * 0.2), 120);
+  }
+
+  /** Muted, looping, inline YouTube embed used for previews (works on mobile via playsinline). */
+  function previewEmbed(id, durationSec) {
+    var qs = new URLSearchParams({
+      autoplay: 1, mute: 1, controls: 0, playsinline: 1, loop: 1, playlist: id,
+      rel: 0, modestbranding: 1, iv_load_policy: 3, disablekb: 1, start: previewStart(durationSec)
+    });
+    return 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?' + qs;
+  }
+
+  /** Full player embed for the in-app lightbox. */
+  function playerEmbed(id) {
+    return 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&playsinline=1&rel=0&modestbranding=1';
+  }
+
+  /** Visual tier for a score badge. */
+  function scoreTier(score) {
+    if (score >= 100) return 'legendary';
+    if (score >= 25) return 'hot';
+    if (score >= 5) return 'warm';
+    return 'mild';
   }
 
   function chunk(arr, n) {
@@ -211,10 +323,11 @@
   }
 
   return {
-    QUOTA: QUOTA, NICHES: NICHES, parseDuration: parseDuration, formatDuration: formatDuration,
+    QUOTA: QUOTA, NICHES: NICHES, NICHE_CATS: NICHE_CATS, parseDuration: parseDuration, formatDuration: formatDuration,
     formatCount: formatCount, formatScore: formatScore, formatAge: formatAge,
     ageDays: ageDays, outlierScore: outlierScore, viewsPerDay: viewsPerDay,
     parseCount: parseCount, buildRows: buildRows, sortRows: sortRows, mergeRows: mergeRows,
-    toCSV: toCSV, csvCell: csvCell, describeApiError: describeApiError, chunk: chunk, previewFrames: previewFrames
+    toCSV: toCSV, csvCell: csvCell, describeApiError: describeApiError, chunk: chunk,
+    previewStart: previewStart, previewEmbed: previewEmbed, playerEmbed: playerEmbed, scoreTier: scoreTier
   };
 });

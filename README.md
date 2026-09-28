@@ -15,7 +15,10 @@ Everything runs in your browser (HTML + vanilla JS + CSS). Your API key is store
 - Save videos to a list (localStorage); export results or saved list to CSV.
 - Approximate quota counter for the session (search = 100 units, videos/channels = 1 unit per call).
 - Clear messages for quota-exceeded, invalid key, referrer-blocked and API-not-enabled errors.
-- Responsive layout with dark mode (follows system, toggle in header).
+- **Niche explorer**: 89 niches in 8 categories (money, tech, stories, learning, lifestyle, making, gaming, viral formats), each tagged with a rough ad-rate tier ($ to $$$). Filter niches by name, or hit "Surprise me".
+- **Previews that work on phones**: tap **▶ Preview** on any card to play the video muted inline (on desktop it also starts on hover). Tap the thumbnail to watch the full video in an in-app player.
+- **Inspiration feed**: random small-channel hits from a random niche, cached for 6 hours to save quota.
+- Installable to your home screen (web app manifest), responsive layout, dark and light themes (follows system, toggle in header).
 
 ## Setup
 
