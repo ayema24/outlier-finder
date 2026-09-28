@@ -171,6 +171,10 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 16px 20px; }
 .count { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: rgba(0,0,0,.2); font-size: .75rem; }
 .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .toolbar select { width: auto; border-radius: 999px; }
+.fmt-switch { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
+.fmt-switch button { font: 500 .82rem var(--font); cursor: pointer; border: 0; background: transparent; color: var(--muted); padding: 7px 12px; border-radius: 999px; transition: all .2s; }
+.fmt-switch button[aria-pressed="true"] { background: var(--surface-hi); color: var(--text); box-shadow: 0 0 0 1px var(--border-hi); }
+.fmt-switch .count { background: none; padding: 0 0 0 2px; margin: 0; color: var(--faint); }
 
 /* ---------- cards ---------- */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; margin-top: 10px; }

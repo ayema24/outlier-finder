@@ -178,6 +178,52 @@
     return Math.round(parseFloat(m[1]) * mult);
   }
 
+  /* ---- Shorts detection ----
+   * The API has no "is this a Short" flag, and Shorts can be up to 3 minutes (since Oct 2024).
+   * Combine: length (> 3 min can't be a Short), shape (vertical player = Short), then a #shorts tag.
+   */
+  var SHORT_MAX_SEC = 180;
+  /** Params that make videos.list return embedWidth/embedHeight, which follow the video's aspect ratio. */
+  var PLAYER_PARAMS = { maxHeight: 720 };
+
+  /** true = vertical, false = horizontal/square, null = unknown. */
+  function isVertical(v) {
+    var p = v && v.player;
+    var w = p && +p.embedWidth, h = p && +p.embedHeight;
+    if (!w || !h) return null;
+    return h > w;
+  }
+
+  function hasShortsTag(v) {
+    var sn = (v && v.snippet) || {};
+    var text = [sn.title, sn.description].concat(sn.tags || []).join(' ');
+    return /#shorts?\b/i.test(text) || (sn.tags || []).some(function (t) { return /^shorts?$/i.test(t); });
+  }
+
+  /** Classify one videos.list item. Returns { isShort, signal } where signal says which rule decided. */
+  function classifyFormat(v) {
+    var dur = parseDuration(v && v.contentDetails && v.contentDetails.duration);
+    if (!dur) return { isShort: false, signal: 'no-duration' }; // live streams / premieres
+    if (dur > SHORT_MAX_SEC) return { isShort: false, signal: 'length' };
+    var vert = isVertical(v);
+    if (vert !== null) return { isShort: vert, signal: 'shape' };
+    if (hasShortsTag(v)) return { isShort: true, signal: 'tag' };
+    return { isShort: dur <= 60, signal: 'length' }; // no shape info: fall back to the old rule
+  }
+
+  /** Format filters: which rows each option keeps, and the search.list videoDuration that pre-filters it. */
+  var FORMATS = {
+    any: { label: 'Any', keep: function () { return true; } },
+    short: { label: 'Shorts', api: 'short', keep: function (s) { return s; } },
+    long: { label: 'Long-form', keep: function (s) { return !s; } },
+    long4: { label: 'Long-form under 4 min', api: 'short', keep: function (s, d) { return !s && d < 240; } },
+    long20: { label: 'Long-form 4–20 min', api: 'medium', keep: function (s, d) { return !s && d >= 240 && d <= 1200; } },
+    longXL: { label: 'Long-form 20+ min', api: 'long', keep: function (s, d) { return !s && d > 1200; } }
+  };
+
+  /** Short flag for a row, including rows saved before detection existed. */
+  function rowIsShort(r) { return r.isShort != null ? !!r.isShort : r.duration > 0 && r.duration < 60; }
+
   /**
    * Merge videos.list + channels.list items into result rows.
    * Returns { rows, hiddenSubs, filtered }.
@@ -201,8 +247,8 @@
       var views = parseInt((v.statistics || {}).viewCount, 10);
       if (isNaN(subs) || isNaN(views)) { filtered++; return; }
       var dur = parseDuration(v.contentDetails && v.contentDetails.duration);
-      if (type === 'short' && dur >= 60) { filtered++; return; }
-      if (type === 'long' && dur < 60) { filtered++; return; }
+      var fmt = classifyFormat(v);
+      if (!(FORMATS[type] || FORMATS.any).keep(fmt.isShort, dur)) { filtered++; return; }
       if (subs > maxSubs || views < minViews) { filtered++; return; }
       var days = ageDays(v.snippet.publishedAt, now);
       var thumbs = v.snippet.thumbnails || {};
@@ -220,7 +266,9 @@
         viewsPerDay: viewsPerDay(views, days),
         publishedAt: v.snippet.publishedAt,
         ageDays: days,
-        duration: dur
+        duration: dur,
+        isShort: fmt.isShort,
+        vertical: isVertical(v)
       });
     });
     return { rows: rows, hiddenSubs: hiddenSubs, filtered: filtered };
@@ -253,7 +301,7 @@
   var CSV_COLS = [
     ['title', 'Title'], ['url', 'Video URL'], ['channel', 'Channel'], ['channelUrl', 'Channel URL'],
     ['subs', 'Subscribers'], ['views', 'Views'], ['score', 'Score'], ['viewsPerDay', 'Views/day'],
-    ['publishedAt', 'Published'], ['duration', 'Duration (s)']
+    ['publishedAt', 'Published'], ['duration', 'Duration (s)'], ['isShort', 'Short']
   ];
 
   function toCSV(rows) {
@@ -262,6 +310,7 @@
       lines.push(CSV_COLS.map(function (c) {
         var v = r[c[0]];
         if (c[0] === 'score' || c[0] === 'viewsPerDay') v = Math.round(v * 100) / 100;
+        if (c[0] === 'isShort') v = rowIsShort(r) ? 'yes' : 'no';
         return csvCell(v);
       }).join(','));
     });
@@ -323,7 +372,8 @@
   }
 
   return {
-    QUOTA: QUOTA, NICHES: NICHES, NICHE_CATS: NICHE_CATS, parseDuration: parseDuration, formatDuration: formatDuration,
+    QUOTA: QUOTA, NICHES: NICHES, FORMATS: FORMATS, SHORT_MAX_SEC: SHORT_MAX_SEC, PLAYER_PARAMS: PLAYER_PARAMS,
+    classifyFormat: classifyFormat, isVertical: isVertical, hasShortsTag: hasShortsTag, rowIsShort: rowIsShort, NICHE_CATS: NICHE_CATS, parseDuration: parseDuration, formatDuration: formatDuration,
     formatCount: formatCount, formatScore: formatScore, formatAge: formatAge,
     ageDays: ageDays, outlierScore: outlierScore, viewsPerDay: viewsPerDay,
     parseCount: parseCount, buildRows: buildRows, sortRows: sortRows, mergeRows: mergeRows,

@@ -5,7 +5,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var canHover = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  var state = { results: [], saved: [], view: 'results', quota: 0, pageToken: null, params: null, hiddenSubs: 0, scanned: 0, busy: false, searched: false };
+  var state = { fmt: 'all', results: [], saved: [], view: 'results', quota: 0, pageToken: null, params: null, hiddenSubs: 0, scanned: 0, busy: false, searched: false };
 
   // ---- storage (guarded; localStorage can throw in private modes) ----
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
@@ -62,9 +62,9 @@
     }, function () { throw new Error('Network error. Check your connection and try again.'); });
   }
 
-  function fetchBatched(endpoint, part, ids) {
+  function fetchBatched(endpoint, part, ids, extra) {
     return Promise.all(OF.chunk(ids, 50).map(function (c) {
-      return api(endpoint, { part: part, id: c.join(','), maxResults: 50 }, OF.QUOTA.list);
+      return api(endpoint, Object.assign({ part: part, id: c.join(','), maxResults: 50 }, extra), OF.QUOTA.list);
     })).then(function (pages) {
       return pages.reduce(function (a, p) { return a.concat(p.items || []); }, []);
     });
@@ -76,7 +76,7 @@
       var ids = (s.items || []).map(function (i) { return i.id && i.id.videoId; }).filter(Boolean);
       var out = { next: s.nextPageToken || null, scanned: ids.length, rows: [], hiddenSubs: 0 };
       if (!ids.length) return out;
-      return fetchBatched('videos', 'snippet,statistics,contentDetails', ids).then(function (videos) {
+      return fetchBatched('videos', 'snippet,statistics,contentDetails,player', ids, OF.PLAYER_PARAMS).then(function (videos) {
         var chIds = Array.from(new Set(videos.map(function (v) { return v.snippet.channelId; })));
         return fetchBatched('channels', 'statistics', chIds).then(function (channels) {
           var built = OF.buildRows(videos, channels, filters);
@@ -99,7 +99,7 @@
       var q = $('q').value.trim();
       if (!q) { $('q').focus(); return; }
       p = { q: q, days: +$('days').value, type: $('type').value, region: region, maxSubs: maxSubs, minViews: minViews === Infinity ? 0 : minViews };
-      state.params = p; state.results = []; state.pageToken = null; state.hiddenSubs = 0; state.scanned = 0; state.searched = true;
+      state.params = p; state.results = []; state.pageToken = null; state.hiddenSubs = 0; state.scanned = 0; state.searched = true; state.fmt = 'all';
       state.view = 'results';
     }
     setBusy(true); show('');
@@ -110,7 +110,8 @@
       publishedAfter: new Date(Date.now() - p.days * 86400000).toISOString()
     };
     if (p.region) sp.regionCode = p.region;
-    if (p.type === 'short') sp.videoDuration = 'short';
+    var fmt = OF.FORMATS[p.type];
+    if (fmt && fmt.api) sp.videoDuration = fmt.api;
     if (more && state.pageToken) sp.pageToken = state.pageToken;
 
     fetchOutliers(sp, { maxSubs: p.maxSubs, minViews: p.minViews, type: p.type }).then(function (r) {
@@ -210,7 +211,7 @@
     t.appendChild(el('span', 'badge score ' + tier, (tier === 'legendary' ? '🔥 ' : '') + OF.formatScore(r.score)));
     if (rank != null) t.appendChild(el('span', 'badge rank', '#' + (rank + 1)));
     t.appendChild(el('span', 'badge dur', OF.formatDuration(r.duration)));
-    if (r.duration && r.duration < 60) t.appendChild(el('span', 'badge short-tag', 'SHORT'));
+    if (OF.rowIsShort(r)) t.appendChild(el('span', 'badge short-tag', 'SHORT'));
     attachPreview(t, r);
     t.addEventListener('click', function () { openPlayer(r); });
     t.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(r); } });
@@ -257,10 +258,28 @@
     return c;
   }
 
-  function currentRows() { return state.view === 'saved' ? state.saved : state.results; }
+  function viewRows() { return state.view === 'saved' ? state.saved : state.results; }
+  /** Rows for the current tab, narrowed by the All / Shorts / Long-form switch so each ranks on its own. */
+  function currentRows() {
+    var rows = viewRows();
+    if (state.fmt === 'short') return rows.filter(OF.rowIsShort);
+    if (state.fmt === 'long') return rows.filter(function (r) { return !OF.rowIsShort(r); });
+    return rows;
+  }
+  function renderFormatSwitch() {
+    var rows = viewRows(), shorts = rows.filter(OF.rowIsShort).length, longs = rows.length - shorts;
+    var box = $('fmtSwitch');
+    box.hidden = !(shorts && longs) && state.fmt === 'all';
+    [['all', rows.length], ['short', shorts], ['long', longs]].forEach(function (x) {
+      var b = box.querySelector('[data-fmt="' + x[0] + '"]');
+      b.setAttribute('aria-pressed', state.fmt === x[0]);
+      b.querySelector('.count').textContent = x[1];
+    });
+  }
 
   function render() {
     stopPreview();
+    renderFormatSwitch();
     var rows = OF.sortRows(currentRows(), $('sort').value);
     var box = $('cards'); box.textContent = '';
     var ranked = $('sort').value === 'score';
@@ -285,7 +304,7 @@
     if (inspo.rows.length) renderInspo();
   }
 
-  function switchView(v) { state.view = v; render(); }
+  function switchView(v) { state.view = v; state.fmt = 'all'; render(); }
 
   function toggleSave(r) {
     var i = state.saved.findIndex(function (s) { return s.id === r.id; });
@@ -315,7 +334,7 @@
     f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
     f.allowFullscreen = true;
     var box = $('lbFrame'); box.textContent = ''; box.appendChild(f);
-    box.classList.toggle('vertical', !!r.duration && r.duration < 60);
+    box.classList.toggle('vertical', r.vertical != null ? !!r.vertical : OF.rowIsShort(r));
     $('lbTitle').textContent = r.title;
     $('lbSub').textContent = r.channel + ' · ' + OF.formatCount(r.views) + ' views · ' + OF.formatCount(r.subs) + ' subs · ' + OF.formatScore(r.score) + ' outlier';
     $('lbOpen').href = r.url;
@@ -427,6 +446,9 @@
   $('shuffleBtn').addEventListener('click', function () { loadInspiration(true); });
   $('surpriseBtn').addEventListener('click', function () { pickNiche(OF.NICHES[Math.floor(Math.random() * OF.NICHES.length)]); });
   $('sort').addEventListener('change', render);
+  Array.prototype.forEach.call(document.querySelectorAll('#fmtSwitch [data-fmt]'), function (b) {
+    b.addEventListener('click', function () { state.fmt = b.dataset.fmt; render(); });
+  });
   $('q').addEventListener('input', function () { if (nicheState.activeQ) { nicheState.activeQ = ''; renderNiches(); } });
   $('nicheFilter').addEventListener('input', function (e) { nicheState.filter = e.target.value.trim(); renderNiches(); });
   $('nicheFilter').addEventListener('keydown', function (e) {
