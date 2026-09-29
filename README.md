@@ -26,6 +26,25 @@ Everything runs in your browser (HTML + vanilla JS + CSS). Your API key is store
 - **Inspiration feed**: random small-channel hits from a random niche, cached for 6 hours to save quota.
 - Installable to your home screen (web app manifest), responsive layout, dark and light themes (follows system, toggle in header).
 
+## The tools
+
+The header has five tabs (a bottom bar on phones). Every card also has **🧬 Similar channels** and **📈 Track channel** shortcuts.
+
+| Tab | What it does | Rough quota cost |
+| --- | --- | --- |
+| **🎯 Outliers** | Everything above: keyword and niche search for small-channel hits. | ~100 per search |
+| **🔥 Viral** | Live breakout radar. *Fresh breakouts* searches uploads from the last 24 h / 48 h / 7 days, sorted by **views per hour**. *Trending chart* reads YouTube's `mostPopular` chart (optionally by category and region) and scores each video against its channel size. Tick **auto-refresh** to reload the trending chart every 5 minutes while the tab is open. A **What's working right now** panel summarises the winners: format mix, share with numbers or questions in the title, recurring words and phrases, typical title length, best posting day. Tap a word to filter the videos. | ~100 (fresh) / ~2 (trending) |
+| **📸 Find channel** | Drop, paste (Ctrl/⌘+V) or pick a screenshot. The text is read in your browser with [Tesseract.js](https://github.com/naptha/tesseract.js) (the image is never uploaded), then turned into clues: an `@handle`, a channel name, a video title and a "12.3K subscribers" hint. Clues are shown in an editable box so you can fix misreads. Searching goes cheapest-first: a handle is one `channels.list` call; otherwise one channel search plus one video-title search. Candidates are ranked with a confidence and the reasons. You can also paste a video link, channel link, `@handle` or name instead. | ~1 with a handle, ~200 without |
+| **🧬 Similar** | Give a channel (link, `@handle`, video link or name). It reads the channel's recent uploads, works out its topic words, searches for channels and videos in the same space, then adds each candidate's recent uploads for growth signals: median views, views ÷ subs, uploads per month and **momentum** (median views of the newest 5 videos vs the 5 before). Two playbook panels compare what works for the source channel with what the similar channels do. Sort by topic match, views vs subs, momentum or size; filter to smaller channels. | ~220 |
+| **📈 Trends** | A watchlist. Every visit stores at most one snapshot per day (subscribers, total views, videos), so subscriber growth and daily change build up over time. Each channel also shows a bar chart of views on its recent videos (videos at 2× the channel's median or better are highlighted), momentum, and a "breaking out on your watchlist" list with rising topics. **Backup / Restore** exports and imports the watchlist as JSON. | ~1 + 2 per channel per refresh |
+
+Things to know:
+
+- **Trend history is stored only in your browser** (`localStorage`). YouTube's API has no historical subscriber data, so the line starts the day you begin tracking. Use **Backup** before clearing site data or switching browsers.
+- **Similar channels is a heuristic.** YouTube removed its "related channels" API, so this matches on topic words from titles, tags and descriptions. The "topic match" percentage is a rough overlap, not a probability. Channels that share no topic words with the source are dropped.
+- **Momentum is a heuristic** too: it needs 6+ videos and ignores videos under 2 days old because their views are still climbing.
+- **Screenshot reading is best-effort OCR.** It works well on clean, high-resolution screenshots where the name or handle is legible. The reader script is vendored in `vendor/` (tesseract.js 5.1.1, unmodified) so no third-party script runs on the page that holds your key; on first use it downloads its worker, WebAssembly core and English data (about 10 MB, cached afterwards) from jsDelivr into a Web Worker.
+
 ## Setup
 
 ### 1. Create a YouTube Data API v3 key
@@ -75,11 +94,16 @@ Scoring, parsing, sorting, CSV and error-mapping logic lives in `lib.js` (pure f
 node test/test.js
 ```
 
+The tool tabs' analysis logic (patterns, topics, momentum, screenshot-text parsing, snapshots) lives in `insights.js`, tested in `test/insights.test.js`, which `test/test.js` runs too.
+
 ## Files
 
 | File | Purpose |
 | --- | --- |
 | `index.html`, `style.css` | Page and styles |
-| `app.js` | UI, API calls, localStorage |
-| `lib.js` | Pure logic (scoring, parsing, CSV, errors) |
+| `app.js` | Outliers UI, API helper, router, shared `OFApp` |
+| `lib.js` | Pure logic (scoring, parsing, CSV, errors, Shorts detection) |
+| `insights.js` | Pure logic for the tools: patterns, topics, momentum, OCR parsing, snapshots |
+| `channels.js` | Shared channel lookups, recent uploads, SVG charts, channel cards |
+| `viral.js`, `finder.js`, `similar.js`, `trends.js` | One file per tool tab |
 | `test/` | Mock data and tests |
