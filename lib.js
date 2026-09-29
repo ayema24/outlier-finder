@@ -168,6 +168,11 @@
     return views / Math.max(days, 1);
   }
 
+  /** Views per hour; anything under an hour old counts as one hour. `days` is the age in days. */
+  function viewsPerHour(views, days) {
+    return views / Math.max(days * 24, 1);
+  }
+
   /** Parse "50k", "1.5m", "2,000" -> number. Returns NaN if invalid, Infinity for empty. */
   function parseCount(str) {
     var s = String(str == null ? '' : str).trim().toLowerCase().replace(/,/g, '');
@@ -224,6 +229,50 @@
   /** Short flag for a row, including rows saved before detection existed. */
   function rowIsShort(r) { return r.isShort != null ? !!r.isShort : r.duration > 0 && r.duration < 60; }
 
+  /** One videos.list item + the channel's subscriber count -> a result row. */
+  function makeRow(v, subs, views, dur, fmt, now) {
+    var days = ageDays(v.snippet.publishedAt, now);
+    var thumbs = v.snippet.thumbnails || {};
+    return {
+      id: v.id,
+      title: v.snippet.title,
+      url: 'https://www.youtube.com/watch?v=' + v.id,
+      thumb: (thumbs.medium || thumbs.high || thumbs.default || {}).url || '',
+      channelId: v.snippet.channelId,
+      channel: v.snippet.channelTitle,
+      channelUrl: 'https://www.youtube.com/channel/' + v.snippet.channelId,
+      subs: subs,
+      views: views,
+      score: outlierScore(views, subs),
+      viewsPerDay: viewsPerDay(views, days),
+      viewsPerHour: viewsPerHour(views, days),
+      publishedAt: v.snippet.publishedAt,
+      ageDays: days,
+      duration: dur,
+      isShort: fmt.isShort,
+      vertical: isVertical(v),
+      tags: (v.snippet.tags || []).slice(0, 8)
+    };
+  }
+
+  /**
+   * Like buildRows but for one channel's own uploads: no size/format filters, works even when
+   * the channel hides its subscriber count (subs = null, score = null).
+   */
+  function channelRows(videoItems, subs, now) {
+    now = now || Date.now();
+    var out = [];
+    (videoItems || []).forEach(function (v) {
+      var views = parseInt((v.statistics || {}).viewCount, 10);
+      if (!v.snippet || isNaN(views)) return;
+      var dur = parseDuration(v.contentDetails && v.contentDetails.duration);
+      var r = makeRow(v, subs, views, dur, classifyFormat(v), now);
+      if (subs == null || isNaN(subs)) { r.subs = null; r.score = null; }
+      out.push(r);
+    });
+    return out.sort(function (a, b) { return new Date(b.publishedAt) - new Date(a.publishedAt); });
+  }
+
   /**
    * Merge videos.list + channels.list items into result rows.
    * Returns { rows, hiddenSubs, filtered }.
@@ -250,26 +299,7 @@
       var fmt = classifyFormat(v);
       if (!(FORMATS[type] || FORMATS.any).keep(fmt.isShort, dur)) { filtered++; return; }
       if (subs > maxSubs || views < minViews) { filtered++; return; }
-      var days = ageDays(v.snippet.publishedAt, now);
-      var thumbs = v.snippet.thumbnails || {};
-      rows.push({
-        id: v.id,
-        title: v.snippet.title,
-        url: 'https://www.youtube.com/watch?v=' + v.id,
-        thumb: (thumbs.medium || thumbs.high || thumbs.default || {}).url || '',
-        channelId: v.snippet.channelId,
-        channel: v.snippet.channelTitle,
-        channelUrl: 'https://www.youtube.com/channel/' + v.snippet.channelId,
-        subs: subs,
-        views: views,
-        score: outlierScore(views, subs),
-        viewsPerDay: viewsPerDay(views, days),
-        publishedAt: v.snippet.publishedAt,
-        ageDays: days,
-        duration: dur,
-        isShort: fmt.isShort,
-        vertical: isVertical(v)
-      });
+      rows.push(makeRow(v, subs, views, dur, fmt, now));
     });
     return { rows: rows, hiddenSubs: hiddenSubs, filtered: filtered };
   }
@@ -278,8 +308,14 @@
     score: function (a, b) { return b.score - a.score; },
     views: function (a, b) { return b.views - a.views; },
     vpd: function (a, b) { return b.viewsPerDay - a.viewsPerDay; },
+    vph: function (a, b) { return rowVph(b) - rowVph(a); },
     newest: function (a, b) { return new Date(b.publishedAt) - new Date(a.publishedAt); }
   };
+
+  /** Views/hour for a row, including rows saved before the field existed. */
+  function rowVph(r) {
+    return r.viewsPerHour != null ? r.viewsPerHour : viewsPerHour(r.views, ageDays(r.publishedAt));
+  }
 
   function sortRows(rows, key) {
     return rows.slice().sort(SORTERS[key] || SORTERS.score);
@@ -330,6 +366,8 @@
       return 'This API key is restricted and blocks requests from this site. Add this page\'s URL to the key\'s allowed HTTP referrers.';
     if (reason === 'accessNotConfigured' || /has not been used|is disabled/i.test(msg))
       return 'YouTube Data API v3 is not enabled for this key\'s Google Cloud project. Enable it in the Cloud Console.';
+    if (reason === 'videoChartNotFound')
+      return 'YouTube has no trending chart for that category in this region. Try another category or region.';
     if (reason === 'badRequest' && /regionCode|region/i.test(msg))
       return 'Invalid region code. Use a 2-letter code such as US or GB.';
     if (status === 400) return 'Bad request' + (msg ? ': ' + msg : '.');
@@ -375,7 +413,7 @@
     QUOTA: QUOTA, NICHES: NICHES, FORMATS: FORMATS, SHORT_MAX_SEC: SHORT_MAX_SEC, PLAYER_PARAMS: PLAYER_PARAMS,
     classifyFormat: classifyFormat, isVertical: isVertical, hasShortsTag: hasShortsTag, rowIsShort: rowIsShort, NICHE_CATS: NICHE_CATS, parseDuration: parseDuration, formatDuration: formatDuration,
     formatCount: formatCount, formatScore: formatScore, formatAge: formatAge,
-    ageDays: ageDays, outlierScore: outlierScore, viewsPerDay: viewsPerDay,
+    ageDays: ageDays, outlierScore: outlierScore, viewsPerDay: viewsPerDay, viewsPerHour: viewsPerHour, rowVph: rowVph, channelRows: channelRows,
     parseCount: parseCount, buildRows: buildRows, sortRows: sortRows, mergeRows: mergeRows,
     toCSV: toCSV, csvCell: csvCell, describeApiError: describeApiError, chunk: chunk,
     previewStart: previewStart, previewEmbed: previewEmbed, playerEmbed: playerEmbed, scoreTier: scoreTier

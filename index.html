@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -34,6 +34,14 @@
   </div>
 </header>
 
+<nav class="mainnav" id="mainNav" aria-label="Tools">
+  <a href="#" data-nav="outliers"><span class="ni" aria-hidden="true">🎯</span><span>Outliers</span></a>
+  <a href="#viral" data-nav="viral"><span class="ni" aria-hidden="true">🔥</span><span>Viral</span></a>
+  <a href="#finder" data-nav="finder"><span class="ni" aria-hidden="true">📸</span><span>Find channel</span></a>
+  <a href="#similar" data-nav="similar"><span class="ni" aria-hidden="true">🧬</span><span>Similar</span></a>
+  <a href="#trends" data-nav="trends"><span class="ni" aria-hidden="true">📈</span><span>Trends</span></a>
+</nav>
+
 <main>
   <section id="settings" class="panel glass settings" hidden>
     <div class="panel-head">
@@ -48,6 +56,7 @@
     <p class="hint">Stored only in this browser and sent only to googleapis.com. The README explains how to create and restrict a key.</p>
   </section>
 
+  <div class="view" id="view-outliers" data-view="outliers">
   <section class="hero">
     <span class="eyebrow"><i class="pulse"></i> Small channels · huge views</span>
     <h1>Find the videos that <span class="grad-text">punch 100× above</span> their weight.</h1>
@@ -142,6 +151,7 @@
           <option value="score">🔥 Outlier score</option>
           <option value="views">👁 Views</option>
           <option value="vpd">⚡ Views / day</option>
+          <option value="vph">🚀 Views / hour</option>
           <option value="newest">🕒 Newest</option>
         </select>
         <div class="fmt-switch" id="fmtSwitch" role="group" aria-label="Show format" hidden>
@@ -161,6 +171,146 @@
     </div>
     <div class="center"><button type="button" class="btn" id="moreBtn" hidden>Load more</button></div>
   </section>
+  </div>
+
+  <!-- ===== Viral videos ===== -->
+  <div class="view" id="view-viral" data-view="viral" hidden>
+    <header class="view-head">
+      <span class="eyebrow"><i class="pulse"></i> Live breakout radar</span>
+      <h1>Viral <span class="grad-text">videos</span></h1>
+      <p class="lede">Catch breakout videos while they're still climbing, and see the patterns behind what's working.</p>
+    </header>
+    <form id="viralForm" class="panel glass tool-form" autocomplete="off">
+      <div class="seg" id="vSource" role="group" aria-label="Where to look">
+        <button type="button" data-src="search" aria-pressed="true">🚀 Fresh breakouts <small>~100 units</small></button>
+        <button type="button" data-src="trending" aria-pressed="false">📊 Trending chart <small>~2 units</small></button>
+      </div>
+      <div class="grid">
+        <div class="field wide" id="vQField"><label for="vQ">Topic (optional)</label><input id="vQ" placeholder="Any topic, or e.g. “ai agents”, “budget travel”"></div>
+        <div class="field" id="vWindowField"><label for="vWindow">Uploaded within</label>
+          <select id="vWindow"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="168">7 days</option></select></div>
+        <div class="field"><label for="vCat">Category</label><select id="vCat"></select></div>
+        <div class="field"><label for="vType">Format</label>
+          <select id="vType"><option value="any">Any</option><option value="short">Shorts</option><option value="long">Long-form</option></select></div>
+        <div class="field"><label for="vMaxSubs">Max channel subs</label><input id="vMaxSubs" value="100k" placeholder="blank = no limit"></div>
+        <div class="field"><label for="vRegion">Region</label><input id="vRegion" maxlength="2" placeholder="US" class="upper"></div>
+      </div>
+      <div class="row">
+        <button type="submit" class="btn" id="vGo">Scan now</button>
+        <label class="check" id="vAutoLabel"><input type="checkbox" id="vAuto"> Auto-refresh every 5 min <small>(trending chart only)</small></label>
+      </div>
+    </form>
+    <div id="viralMsg" class="message" role="status" hidden></div>
+    <section class="patterns glass" id="viralPatterns" hidden aria-labelledby="patTitle">
+      <div class="section-head">
+        <div><h2 id="patTitle">What's working right now</h2><p class="hint" id="patSub"></p></div>
+      </div>
+      <ul class="insights" id="patInsights"></ul>
+      <div class="pat-chips"><span class="pat-label">Recurring words <small>(tap to filter)</small></span><div class="chips-inline" id="patWords"></div></div>
+    </section>
+    <div class="results-bar static">
+      <p class="live" id="viralLive" hidden><i class="pulse"></i> <span id="viralUpdated"></span></p>
+      <div class="toolbar">
+        <label for="vSort" class="sr-only">Sort by</label>
+        <select id="vSort"><option value="vph">🚀 Views / hour</option><option value="score">🔥 Outlier score</option><option value="views">👁 Views</option><option value="newest">🕒 Newest</option></select>
+      </div>
+    </div>
+    <div id="viralCards" class="cards"></div>
+    <div class="empty" id="viralEmpty"><div class="empty-orb" aria-hidden="true">🔥</div><p>Hit <b>Scan now</b> to see what's breaking out.</p></div>
+  </div>
+
+  <!-- ===== Find channel from a screenshot ===== -->
+  <div class="view" id="view-finder" data-view="finder" hidden>
+    <header class="view-head">
+      <span class="eyebrow">📸 Screenshot → channel</span>
+      <h1>Find the <span class="grad-text">channel</span> behind it</h1>
+      <p class="lede">Saw a great video on TikTok, Instagram or a screen recording? Drop a screenshot and I'll track down the YouTube channel.</p>
+    </header>
+    <section class="panel glass finder">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose or drop a screenshot">
+        <div class="drop-orb" aria-hidden="true">📸</div>
+        <p><b>Drop a screenshot here</b>, paste it (Ctrl / ⌘ + V) or <span class="linklike">choose a file</span></p>
+        <p class="hint">Works best when the channel name, @handle or video title is visible. Text is read in your browser and the image is never uploaded.</p>
+        <input type="file" id="fileInput" accept="image/*" hidden>
+      </div>
+      <div class="finder-work" id="finderWork" hidden>
+        <img id="finderPreview" alt="Your screenshot">
+        <div class="finder-side">
+          <div class="progress" id="finderProgress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i id="finderBar"></i></div>
+          <p class="hint" id="finderStatus"></p>
+          <label for="finderLines">What I'll search for <small>(fix any text the reader got wrong)</small></label>
+          <textarea id="finderLines" rows="5" spellcheck="false" placeholder="@handle&#10;channel: Channel name&#10;title: Video title"></textarea>
+          <p class="hint" id="finderHint"></p>
+          <div class="row"><button type="button" class="btn" id="finderGo" disabled>Find channel</button><button type="button" class="btn ghost" id="finderReset">Start over</button></div>
+        </div>
+      </div>
+      <form id="finderForm" class="row alt-input" autocomplete="off">
+        <input id="finderText" placeholder="…or paste a video link, channel link, @handle or name" aria-label="Video link, channel link, handle or name">
+        <button type="submit" class="btn ghost">Find</button>
+      </form>
+    </section>
+    <div id="finderMsg" class="message" role="status" hidden></div>
+    <div id="finderResults" class="channel-grid"></div>
+  </div>
+
+  <!-- ===== Similar channels ===== -->
+  <div class="view" id="view-similar" data-view="similar" hidden>
+    <header class="view-head">
+      <span class="eyebrow">🧬 Competitor radar</span>
+      <h1>Similar <span class="grad-text">channels</span></h1>
+      <p class="lede">Discover channels in the same space, see how fast they're growing and what their winning videos have in common.</p>
+    </header>
+    <form id="similarForm" class="panel glass tool-form" autocomplete="off">
+      <div class="row">
+        <input id="similarInput" placeholder="Channel link, @handle, video link or name" aria-label="Channel">
+        <button type="submit" class="btn" id="similarGo">Find similar</button>
+      </div>
+      <p class="hint">Uses about 220 quota units (300 if you type a name instead of a link or @handle).</p>
+    </form>
+    <div id="similarMsg" class="message" role="status" hidden></div>
+    <div id="similarPick" class="chooser glass" hidden></div>
+    <section id="similarSource" class="panel glass source-panel" hidden></section>
+    <div class="results-bar static" id="similarBar" hidden>
+      <p class="hint" id="similarSummary"></p>
+      <div class="toolbar">
+        <label for="similarSort" class="sr-only">Sort by</label>
+        <select id="similarSort"><option value="match">🎯 Best topic match</option><option value="growth">🚀 Views vs subs</option><option value="momentum">📈 Momentum</option><option value="small">🌱 Smallest first</option></select>
+        <label class="check"><input type="checkbox" id="similarSmaller"> Smaller than source</label>
+      </div>
+    </div>
+    <div id="similarCards" class="channel-grid"></div>
+  </div>
+
+  <!-- ===== Channel trends ===== -->
+  <div class="view" id="view-trends" data-view="trends" hidden>
+    <header class="view-head">
+      <span class="eyebrow">📈 Watchlist</span>
+      <h1>Channel <span class="grad-text">trends</span></h1>
+      <p class="lede">Follow the channels you care about. Each visit adds a daily snapshot, so growth and emerging trends show up over time.</p>
+    </header>
+    <section class="panel glass tool-form">
+      <form id="trendForm" class="row" autocomplete="off">
+        <input id="trendInput" placeholder="Add a channel: link, @handle, video link or name" aria-label="Channel to track">
+        <button type="submit" class="btn" id="trendAdd">Add</button>
+      </form>
+      <div class="row trend-tools">
+        <button type="button" class="btn ghost" id="trendRefresh">↻ Refresh all</button>
+        <button type="button" class="btn ghost" id="trendExport">⬇ Backup</button>
+        <button type="button" class="btn ghost" id="trendImport">⬆ Restore</button>
+        <input type="file" id="trendFile" accept="application/json,.json" hidden>
+        <span class="hint" id="trendStatus"></span>
+      </div>
+    </section>
+    <div id="trendMsg" class="message" role="status" hidden></div>
+    <div id="trendPick" class="chooser glass" hidden></div>
+    <section class="patterns glass" id="trendBreakouts" hidden aria-labelledby="brkTitle">
+      <div class="section-head"><div><h2 id="brkTitle">Breaking out on your watchlist</h2><p class="hint">Recent videos doing several times better than their channel's usual.</p></div></div>
+      <ul class="brk-list" id="brkList"></ul>
+      <div class="pat-chips" id="brkTopics" hidden><span class="pat-label">Topics in those videos</span><div class="chips-inline" id="brkChips"></div></div>
+    </section>
+    <div id="trendList" class="channel-grid trend-grid"></div>
+    <div class="empty" id="trendEmpty"><div class="empty-orb" aria-hidden="true">📈</div><p>No channels yet. Add one above, or tap <b>📈 Track</b> on any video card or channel.</p></div>
+  </div>
 </main>
 
 <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-labelledby="lbTitle">
@@ -183,7 +333,13 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <footer>Not affiliated with YouTube or Google · Score = views ÷ max(subscribers, 100)</footer>
-<script src="lib.js?v=6"></script>
-<script src="app.js?v=6"></script>
+<script src="lib.js?v=7"></script>
+<script src="insights.js?v=7"></script>
+<script src="app.js?v=7"></script>
+<script src="channels.js?v=7"></script>
+<script src="viral.js?v=7"></script>
+<script src="finder.js?v=7"></script>
+<script src="similar.js?v=7"></script>
+<script src="trends.js?v=7"></script>
 </body>
 </html>

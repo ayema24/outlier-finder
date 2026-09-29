@@ -199,9 +199,11 @@
     if (io) io.observe(thumb);
   }
 
-  function card(r, rank) {
+  /** opts: { pill: 'text shown above the stats', perHour: true to show views/hour instead of views/day } */
+  function card(r, rank, opts) {
+    opts = opts || {};
     var c = el('article', 'card');
-    c.style.animationDelay = Math.min(rank, 12) * 40 + 'ms';
+    c.style.animationDelay = Math.min(rank || 0, 12) * 40 + 'ms';
     var t = el('div', 'thumb');
     t.setAttribute('role', 'button'); t.tabIndex = 0;
     t.setAttribute('aria-label', 'Play ' + r.title);
@@ -234,7 +236,9 @@
 
     var dl = el('dl', 'stats');
     stat(dl, 'Views', OF.formatCount(r.views)); stat(dl, 'Subs', OF.formatCount(r.subs));
-    stat(dl, 'Per day', OF.formatCount(Math.round(r.viewsPerDay))); stat(dl, 'Age', OF.formatAge(OF.ageDays(r.publishedAt)));
+    if (opts.perHour) stat(dl, 'Per hour', OF.formatCount(Math.round(OF.rowVph(r))));
+    else stat(dl, 'Per day', OF.formatCount(Math.round(r.viewsPerDay)));
+    stat(dl, 'Age', OF.formatAge(OF.ageDays(r.publishedAt)));
 
     var actions = el('div', 'actions');
     var isSaved = state.saved.some(function (s) { return s.id === r.id; });
@@ -244,7 +248,16 @@
     var open = el('a', 'btn ghost', 'YouTube ↗'); open.href = r.url; open.target = '_blank'; open.rel = 'noopener noreferrer';
     actions.appendChild(btn); actions.appendChild(open);
 
-    [title, ch, meter, dl, actions].forEach(function (n) { b.appendChild(n); });
+    var tools = el('div', 'actions sub');
+    var simBtn = el('button', 'link-btn', '🧬 Similar channels'); simBtn.type = 'button';
+    simBtn.addEventListener('click', function () { go('similar', r.channelId); });
+    var trkBtn = el('button', 'link-btn', '📈 Track channel'); trkBtn.type = 'button';
+    trkBtn.addEventListener('click', function () { if (api_.trackById) api_.trackById(r.channelId, r.channel); });
+    tools.appendChild(simBtn); tools.appendChild(trkBtn);
+
+    [title, ch].forEach(function (n) { b.appendChild(n); });
+    if (opts.pill) b.appendChild(el('div', 'pill', opts.pill));
+    [meter, dl, actions, tools].forEach(function (n) { b.appendChild(n); });
     c.appendChild(b);
     return c;
   }
@@ -336,7 +349,8 @@
     var box = $('lbFrame'); box.textContent = ''; box.appendChild(f);
     box.classList.toggle('vertical', r.vertical != null ? !!r.vertical : OF.rowIsShort(r));
     $('lbTitle').textContent = r.title;
-    $('lbSub').textContent = r.channel + ' · ' + OF.formatCount(r.views) + ' views · ' + OF.formatCount(r.subs) + ' subs · ' + OF.formatScore(r.score) + ' outlier';
+    $('lbSub').textContent = r.channel + ' · ' + OF.formatCount(r.views) + ' views' +
+      (r.subs != null ? ' · ' + OF.formatCount(r.subs) + ' subs · ' + OF.formatScore(r.score) + ' outlier' : '');
     $('lbOpen').href = r.url;
     $('lightbox').hidden = false;
     document.body.classList.add('lb-open');
@@ -480,6 +494,38 @@
     applyTheme(next); store(THEME_STORE, next);
   });
   document.addEventListener('visibilitychange', function () { if (document.hidden) stopPreview(); });
+
+  // ---- router: #viral, #finder, #similar/<channelId>, #trends (no hash = outliers) ----
+  var VIEWS = ['outliers', 'viral', 'finder', 'similar', 'trends'], modules = {};
+  function go(view, arg) { location.hash = view === 'outliers' ? '' : '#' + view + (arg ? '/' + encodeURIComponent(arg) : ''); if (!location.hash && view === 'outliers') route(); }
+  function route() {
+    var parts = (location.hash || '').replace(/^#/, '').split('/');
+    var view = VIEWS.indexOf(parts[0]) >= 0 ? parts[0] : 'outliers';
+    var arg = '';
+    try { arg = decodeURIComponent(parts.slice(1).join('/')); } catch (e) { arg = parts.slice(1).join('/'); }
+    stopPreview();
+    Array.prototype.forEach.call(document.querySelectorAll('.view'), function (v) { v.hidden = v.dataset.view !== view; });
+    Array.prototype.forEach.call(document.querySelectorAll('#mainNav a'), function (a) {
+      var on = a.dataset.nav === view;
+      a.classList.toggle('active', on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    document.body.dataset.view = view;
+    window.scrollTo(0, 0);
+    if (modules[view] && modules[view].show) modules[view].show(arg);
+  }
+  window.addEventListener('hashchange', route);
+  document.addEventListener('DOMContentLoaded', route); // runs after every module script has registered
+
+  /** Shared with channels.js, viral.js, finder.js, similar.js and trends.js. */
+  var api_ = window.OFApp = {
+    $: $, el: el, stat: stat, hue: hue, api: api, fetchBatched: fetchBatched, store: store, getKey: getKey, toast: toast,
+    fetchOutliers: fetchOutliers, card: card, skeleton: skeleton, openPlayer: openPlayer, openSettings: openSettings, go: go, stopPreview: stopPreview,
+    register: function (name, mod) { modules[name] = mod; },
+    /** Show a message in a view's own message box; opens Settings when the problem is a missing key. */
+    say: function (box, text, isError) { box.textContent = text || ''; box.className = 'message' + (isError ? ' error' : ''); box.hidden = !text; },
+    fail: function (box, e) { api_.say(box, e && e.message || String(e), true); if (/API key/.test(e && e.message)) openSettings(true); }
+  };
 
   $('nicheCount').textContent = OF.NICHES.length;
   renderCatTabs(); renderNiches(); updateKeyStatus(); updateQuota(); updateFilterSummary(); render();

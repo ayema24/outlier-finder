@@ -161,3 +161,4 @@ t('rowIsShort handles rows saved before detection existed', () => {
   assert.strictEqual(OF.rowIsShort({ duration: 0 }), false);
 });
 console.log(`\n${n} tests passed`);
+require('./insights.test.js');
