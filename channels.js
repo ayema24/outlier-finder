@@ -263,10 +263,13 @@
     });
     if (med > 0) {
       s('line', { x1: pl, x2: VB[0] - pr, y1: Y(med), y2: Y(med), 'class': 'median' }, svgEl);
-      stext(svgEl, VB[0] - pr, Y(med) - 4, 'median ' + OF.formatCount(Math.round(med)), 'ct', 'end');
+      // put the label over whichever end has the shorter bars, so it doesn't sit on a tall one
+      var third = Math.max(1, Math.floor(list.length / 3)), tall = function (a) { return Math.max.apply(null, a.map(function (r) { return r.views; }).concat([0])); };
+      var left = tall(list.slice(0, third)) <= tall(list.slice(-third));
+      stext(svgEl, left ? pl : VB[0] - pr, Y(med) - 4, 'median ' + OF.formatCount(Math.round(med)), 'ct halo', left ? 'start' : 'end');
     }
     var top = list.reduce(function (a, r) { return r.views > a.views ? r : a; }, list[0]), ti = list.indexOf(top);
-    stext(svgEl, Math.max(24, Math.min(VB[0] - 24, pl + slot * ti + slot / 2)), Y(top.views) - 5, OF.formatCount(top.views), 'cv', 'middle');
+    stext(svgEl, Math.max(24, Math.min(VB[0] - 24, pl + slot * ti + slot / 2)), Y(top.views) - 5, OF.formatCount(top.views), 'cv halo', 'middle');
     stext(svgEl, pl, VB[1] - 4, fmtDate(list[0].publishedAt), 'ct', 'start');
     if (list.length > 1) stext(svgEl, VB[0] - pr, VB[1] - 4, fmtDate(list[list.length - 1].publishedAt), 'ct', 'end');
     return wrap;

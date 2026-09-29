@@ -2,8 +2,9 @@
 (function () {
   'use strict';
   var A = window.OFApp, $ = A.$, el = A.el;
-  // Loaded only when a screenshot is used. Pinned to an exact version.
-  var TESS_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  // tesseract.js 5.1.1, vendored (same origin, see vendor/README.md) and loaded only when a screenshot is used.
+  // Its worker, WebAssembly core and language data download from jsDelivr and run in a Web Worker.
+  var TESS_SRC = 'vendor/tesseract.min.js';
   var MAX_BYTES = 15 * 1024 * 1024;
   var st = { url: null, subHint: null, busy: false, token: 0 };
 
@@ -14,7 +15,7 @@
     if (!tessPromise) {
       tessPromise = new Promise(function (resolve, reject) {
         var s = document.createElement('script');
-        s.src = TESS_SRC; s.crossOrigin = 'anonymous'; s.async = true;
+        s.src = TESS_SRC; s.async = true;
         s.onload = function () { window.Tesseract ? resolve(window.Tesseract) : reject(new Error('reader missing')); };
         s.onerror = function () { tessPromise = null; reject(new Error('reader blocked')); };
         document.head.appendChild(s);

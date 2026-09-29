@@ -43,7 +43,7 @@ Things to know:
 - **Trend history is stored only in your browser** (`localStorage`). YouTube's API has no historical subscriber data, so the line starts the day you begin tracking. Use **Backup** before clearing site data or switching browsers.
 - **Similar channels is a heuristic.** YouTube removed its "related channels" API, so this matches on topic words from titles, tags and descriptions. The "topic match" percentage is a rough overlap, not a probability. Channels that share no topic words with the source are dropped.
 - **Momentum is a heuristic** too: it needs 6+ videos and ignores videos under 2 days old because their views are still climbing.
-- **Screenshot reading is best-effort OCR.** It works well on clean, high-resolution screenshots where the name or handle is legible. The first use downloads the reader (about 10 MB) from jsDelivr; it is pinned to `tesseract.js@5.1.1` and only loaded when you use Find channel.
+- **Screenshot reading is best-effort OCR.** It works well on clean, high-resolution screenshots where the name or handle is legible. The reader script is vendored in `vendor/` (tesseract.js 5.1.1, unmodified) so no third-party script runs on the page that holds your key; on first use it downloads its worker, WebAssembly core and English data (about 10 MB, cached afterwards) from jsDelivr into a Web Worker.
 
 ## Setup
 
